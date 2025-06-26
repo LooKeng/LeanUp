@@ -8,3 +8,4 @@ Sphinx
 twine
 ruff
 pytest
+build
