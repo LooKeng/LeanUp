@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "leanup"
-version = "0.0.2"
+version = "0.0.3"
 description = "Python package for Lean Environment Management"
 readme = "README.md"
 authors = [
@@ -18,7 +18,11 @@ classifiers = [
 ]
 license = {text = "MIT license"}
 dependencies = [
-  
+  "gitpython",
+  "psutil",  # Process management
+  "click",  # Command line interface
+  "platformdirs",  # Platform-specific directories
+  "loguru",  # Logging
 ]
 
 [project.optional-dependencies]
@@ -28,6 +32,9 @@ dev = [
     "pytest",  # testing
     "ruff"  # linting
 ]
+
+[project.scripts]
+leanup = "leanup.cli:main"
 
 [project.urls]
 
