@@ -2,7 +2,6 @@
 
 """Tests for `leanup` package."""
 
-import pytest
 from leanup.const import LEANUP_CACHE_DIR, OS_TYPE
 
 def test_leanup_basic():

@@ -4,11 +4,9 @@ Elan 工具链管理器
 """
 
 import os
-import sys
-import tempfile
 import requests
 from pathlib import Path
-from typing import Optional, List, Tuple, Dict
+from typing import Optional, List, Dict
 import subprocess
 import shutil
 from loguru import logger
@@ -170,7 +168,8 @@ class ElanManager:
             try:
                 if 'installer_path' in locals() and installer_path.exists():
                     installer_path.unlink()
-            except:
+            except OSError:
+                # 忽略文件删除错误
                 pass
     
     def proxy_elan_command(self, args: List[str]) -> int:

@@ -56,9 +56,9 @@ def install(version, force):
         # 提示用户可能需要的下一步操作
         if OS_TYPE != 'Windows':
             click.echo("\n💡 提示: 您可能需要重新启动终端或运行以下命令来更新 PATH:")
-            click.echo(f"   source ~/.bashrc")
-            click.echo(f"   # 或者")
-            click.echo(f"   source ~/.zshrc")
+            click.echo("   source ~/.bashrc")
+            click.echo("   # 或者")
+            click.echo("   source ~/.zshrc")
         
         click.echo("\n🎉 现在您可以使用以下命令:")
         click.echo("   leanup elan --help      # 查看 elan 帮助")

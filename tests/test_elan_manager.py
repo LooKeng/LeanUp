@@ -3,10 +3,8 @@
 """Tests for `elan_manager` module."""
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 from pathlib import Path
-import tempfile
-import os
 
 from leanup.elan_manager import ElanManager
 from leanup.const import OS_TYPE
