@@ -11,11 +11,11 @@ logger.add(sys.stderr, level="INFO", format="<green>{time:HH:mm:ss}</green> | <l
 
 
 @click.group()
-@click.option('--verbose', '-v', is_flag=True, help='启用详细输出')
+@click.option('--verbose', '-v', is_flag=True, help='Enable verbose output')
 def main(verbose):
-    """LeanUp - Lean 环境管理工具
+    """LeanUp - Lean Environment Management Tool
     
-    一个用于管理 Lean 数学证明语言环境的 Python 工具。
+    A Python tool for managing Lean mathematical proof language environments.
     """
     if verbose:
         logger.remove()
@@ -24,63 +24,63 @@ def main(verbose):
 
 @main.command()
 @click.argument('version', required=False)
-@click.option('--force', '-f', is_flag=True, help='强制重新安装，即使 elan 已存在')
+@click.option('--force', '-f', is_flag=True, help='Force reinstall even if elan exists')
 def install(version, force):
-    """安装 elan 工具链管理器
+    """Install elan toolchain manager
     
-    VERSION: 可选的版本号（默认安装最新版本）
+    VERSION: Optional version number (installs latest version by default)
     
-    示例:
-        leanup install          # 安装最新版本
-        leanup install v1.4.2   # 安装指定版本
-        leanup install --force  # 强制重新安装
+    Examples:
+        leanup install          # Install latest version
+        leanup install v1.4.2   # Install specific version
+        leanup install --force  # Force reinstall
     """
     manager = ElanManager()
     
-    click.echo(f"正在为 {OS_TYPE} 安装 elan...")
+    click.echo(f"Installing elan for {OS_TYPE}...")
     
     if version:
-        click.echo(f"指定版本: {version}")
+        click.echo(f"Specified version: {version}")
     
     success = manager.install_elan(version=version, force=force)
     
     if success:
-        click.echo("elan 安装成功!")
+        click.echo("elan installation successful!")
         
-        # 显示安装信息
+        # Show installation info
         info = manager.get_status_info()
-        click.echo(f"安装位置: {info['executable']}")
+        click.echo(f"Installation location: {info['executable']}")
         click.echo(f"ELAN_HOME: {info['elan_home']}")
-        click.echo(f"版本: {info['version']}")
+        click.echo(f"Version: {info['version']}")
         
-        # 提示用户可能需要的下一步操作
+        # Hint for next steps
         if OS_TYPE != 'Windows':
-            click.echo("\n提示: 您可能需要重新启动终端或运行以下命令来更新 PATH:")
+            click.echo("\nNote: You may need to restart your terminal or run the following commands to update PATH:")
             click.echo("   source ~/.bashrc")
-            click.echo("   # 或者")
+            click.echo("   # or")
             click.echo("   source ~/.zshrc")
         
-        click.echo("\n现在您可以使用以下命令:")
-        click.echo("   leanup elan --help      # 查看 elan 帮助")
-        click.echo("   leanup status           # 查看状态")
+        click.echo("\nYou can now use the following commands:")
+        click.echo("   leanup elan --help      # Show elan help")
+        click.echo("   leanup status           # Check status")
     else:
-        click.echo("elan 安装失败!")
+        click.echo("elan installation failed!")
         sys.exit(1)
 
 
 @main.command(context_settings=dict(ignore_unknown_options=True, allow_extra_args=True))
 @click.pass_context
 def elan(ctx):
-    """代理执行 elan 命令
+    """Proxy elan commands
     
-    将所有参数直接传递给 elan 工具。这允许您像使用原生 elan 一样使用 leanup elan。
+    Pass all arguments directly to the elan tool. This allows you to use leanup elan just like native elan.
     
-    示例:
-        leanup elan --help                    # 查看 elan 帮助
-        leanup elan toolchain list            # 列出已安装的工具链
-        leanup elan toolchain install stable  # 安装稳定版工具链
-        leanup elan default stable            # 设置默认工具链
-        leanup elan update                    # 更新工具链
+    Examples:
+        leanup elan --help                    # Show elan help
+        leanup elan toolchain list            # List installed toolchains
+        leanup elan toolchain install stable  # Install stable toolchain
+        leanup elan default stable            # Set default toolchain
+        leanup elan update                    # Update toolchains
     """
     manager = ElanManager()
     
@@ -91,45 +91,45 @@ def elan(ctx):
 
 @main.command()
 def status():
-    """显示 LeanUp 和 elan 的状态信息"""
+    """Show LeanUp and elan status information"""
     manager = ElanManager()
     info = manager.get_status_info()
     
-    click.echo("LeanUp 状态信息")
+    click.echo("LeanUp Status Information")
     click.echo("=" * 50)
     
-    click.echo(f"操作系统: {OS_TYPE}")
+    click.echo(f"Operating System: {OS_TYPE}")
     
     if info['installed']:
-        click.echo("elan 状态: 已安装")
-        click.echo(f"版本: {info['version']}")
-        click.echo(f"可执行文件: {info['executable']}")
+        click.echo("elan Status: Installed")
+        click.echo(f"Version: {info['version']}")
+        click.echo(f"Executable: {info['executable']}")
         click.echo(f"ELAN_HOME: {info['elan_home']}")
         
         toolchains = info['toolchains']
         if toolchains:
-            click.echo(f"已安装的工具链 ({len(toolchains)}):")
+            click.echo(f"Installed Toolchains ({len(toolchains)}):")
             for toolchain in toolchains:
                 click.echo(f"   • {toolchain}")
         else:
-            click.echo("已安装的工具链: 无")
-            click.echo("提示: 运行 'leanup elan toolchain install stable' 安装稳定版工具链")
+            click.echo("Installed Toolchains: None")
+            click.echo("Tip: Run 'leanup elan toolchain install stable' to install stable toolchain")
     else:
-        click.echo("elan 状态: 未安装")
-        click.echo("提示: 运行 'leanup install' 安装 elan")
+        click.echo("elan Status: Not Installed")
+        click.echo("Tip: Run 'leanup install' to install elan")
 
 
 @main.command()
 def version():
-    """显示 LeanUp 版本信息"""
+    """Show LeanUp version information"""
     from . import __version__
-    click.echo(f"LeanUp 版本: {__version__}")
+    click.echo(f"LeanUp Version: {__version__}")
 
 
 # 保留原有的 repo 组以保持向后兼容
 @main.group()
 def repo():
-    """管理 Lean 仓库安装 (实验性功能)"""
+    """Manage Lean repository installations (experimental feature)"""
     pass
 
 
