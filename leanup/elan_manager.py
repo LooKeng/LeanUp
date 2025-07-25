@@ -117,18 +117,22 @@ class ElanManager:
             download_url = self.get_download_url(version)
             
             if OS_TYPE == 'Windows':
-                installer_path = temp_dir / 'elan-init.ps1'
-                if not self.download_installer(download_url, installer_path):
-                    return False
-                
-                # 运行 Windows PowerShell 安装脚本
-                logger.info("正在运行 elan PowerShell 安装脚本...")
+                # Windows 使用 PowerShell 直接从网络运行脚本（官方推荐方式）
+                logger.info("正在通过 PowerShell 安装 elan...")
                 # 设置环境变量以进行非交互式安装
                 env = os.environ.copy()
                 env['ELAN_HOME'] = str(self.elan_home)
                 
-                cmd = ['powershell', '-ExecutionPolicy', 'Bypass', '-File', str(installer_path), '-y']
-                output, error, code = self.executor.execute(cmd)
+                # 根据官方文档的建议，使用 PowerShell 直接下载和执行
+                script_content = f"""
+                $env:ELAN_HOME = "{self.elan_home}"
+                Invoke-WebRequest -Uri "https://elan.lean-lang.org/elan-init.ps1" -OutFile "elan-init.ps1"
+                & .\\elan-init.ps1 -y
+                Remove-Item "elan-init.ps1" -ErrorAction SilentlyContinue
+                """
+                
+                cmd = ['powershell', '-ExecutionPolicy', 'Bypass', '-Command', script_content]
+                output, error, code = self.executor.execute(cmd, cwd=str(temp_dir))
                 
                 if code != 0:
                     logger.error(f"安装失败: {error}")
@@ -167,7 +171,7 @@ class ElanManager:
         finally:
             # 清理临时文件
             try:
-                if 'installer_path' in locals() and installer_path.exists():
+                if OS_TYPE != 'Windows' and 'installer_path' in locals() and installer_path.exists():
                     installer_path.unlink()
             except OSError:
                 # 忽略文件删除错误
