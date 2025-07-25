@@ -5,3 +5,4 @@ __email__ = 'leanprover@outlook.com'
 __version__ = '0.0.3'
 
 from leanup.utils import CommandExecutor
+from leanup.elan_manager import ElanManager

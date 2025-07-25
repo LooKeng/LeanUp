@@ -4,39 +4,80 @@ on:
   push:
     branches:
       - main
+      - dev
   pull_request:
     branches:
       - main
+      - dev
 
 jobs:
-  build:
+  test:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         include:
+          # Test on multiple Python versions and OS combinations
           - python-version: "3.9"
+            os: ubuntu-latest
+          - python-version: "3.10"
+            os: ubuntu-latest
+          - python-version: "3.11"
+            os: ubuntu-latest
+          - python-version: "3.12"
             os: ubuntu-latest
           - python-version: "3.9"
             os: macos-latest
-          # NOTE: Windows support should be available !
+          - python-version: "3.12"
+            os: macos-latest
           - python-version: "3.9" 
+            os: windows-latest
+          - python-version: "3.12"
             os: windows-latest
             
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
+    
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         python -m pip install .
         python -m pip install -r requirements_dev.txt
+    
+    - name: Lint with ruff
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        ruff check . --output-format=github --select=E9,F63,F7,F82 --target-version=py39
+        # default set of ruff rules with GitHub Annotations
+        ruff check . --output-format=github --target-version=py39
+    
+    - name: Test basic CLI functionality
+      run: |
+        leanup --help
+        leanup version
+        leanup status
+    
     - name: Test with pytest and coverage
       run: |
-        pip install coverage
-        coverage run -m pytest tests/
+        coverage run -m pytest tests/ -v
+        coverage report -m
+    
+    - name: Test cross-platform installation workflow (without actual install)
+      run: |
+        python -c "
+        from leanup.elan_manager import ElanManager
+        manager = ElanManager()
+        print('✓ ElanManager initialization successful')
+        url = manager.get_download_url()
+        print(f'✓ Download URL: {url}')
+        status = manager.get_status_info()
+        print(f'✓ Status info: {status}')
+        "
+    
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
       with:

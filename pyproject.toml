@@ -23,6 +23,7 @@ dependencies = [
   "click",  # Command line interface
   "platformdirs",  # Platform-specific directories
   "loguru",  # Logging
+  "requests",  # HTTP requests for downloading
 ]
 
 [project.optional-dependencies]
