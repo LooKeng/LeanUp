@@ -5,7 +5,6 @@ Elan 工具链管理器
 
 import os
 import requests
-import zipfile
 from pathlib import Path
 from typing import Optional, List, Dict
 import subprocess
@@ -66,16 +65,13 @@ class ElanManager:
             return None
     
     def get_download_url(self, version: Optional[str] = None) -> str:
-        """获取 elan 安装脚本或可执行文件的下载 URL"""
-        base_url = "https://raw.githubusercontent.com/leanprover/elan/master"
-        
+        """获取 elan 安装脚本的下载 URL"""
         if OS_TYPE == 'Windows':
-            # Windows 使用预编译的压缩包
-            github_releases = "https://github.com/leanprover/elan/releases/latest/download"
-            return f"{github_releases}/elan-x86_64-pc-windows-msvc.zip"
+            # Windows 使用官方 PowerShell 脚本
+            return "https://elan.lean-lang.org/elan-init.ps1"
         else:
-            # Linux 和 macOS 使用安装脚本
-            return f"{base_url}/elan-init.sh"
+            # Linux 和 macOS 使用官方 shell 脚本  
+            return "https://elan.lean-lang.org/elan-init.sh"
     
     def download_installer(self, url: str, target_path: Path) -> bool:
         """下载 elan 安装程序"""
@@ -121,32 +117,17 @@ class ElanManager:
             download_url = self.get_download_url(version)
             
             if OS_TYPE == 'Windows':
-                zip_path = temp_dir / 'elan.zip'
-                if not self.download_installer(download_url, zip_path):
+                installer_path = temp_dir / 'elan-init.ps1'
+                if not self.download_installer(download_url, installer_path):
                     return False
                 
-                # 解压缩 Windows 安装程序
-                logger.info("正在解压缩 elan 安装程序...")
-                extract_dir = temp_dir / 'elan_extract'
-                extract_dir.mkdir(exist_ok=True)
+                # 运行 Windows PowerShell 安装脚本
+                logger.info("正在运行 elan PowerShell 安装脚本...")
+                # 设置环境变量以进行非交互式安装
+                env = os.environ.copy()
+                env['ELAN_HOME'] = str(self.elan_home)
                 
-                with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-                    zip_ref.extractall(extract_dir)
-                
-                # 查找可执行文件
-                installer_path = None
-                for file in extract_dir.iterdir():
-                    if file.name.endswith('.exe'):
-                        installer_path = file
-                        break
-                
-                if not installer_path:
-                    logger.error("在压缩包中未找到可执行文件")
-                    return False
-                
-                # 运行 Windows 安装程序
-                logger.info("正在运行 elan 安装程序...")
-                cmd = [str(installer_path), '-y']
+                cmd = ['powershell', '-ExecutionPolicy', 'Bypass', '-File', str(installer_path), '-y']
                 output, error, code = self.executor.execute(cmd)
                 
                 if code != 0:
@@ -186,14 +167,8 @@ class ElanManager:
         finally:
             # 清理临时文件
             try:
-                if OS_TYPE == 'Windows':
-                    if 'zip_path' in locals() and zip_path.exists():
-                        zip_path.unlink()
-                    if 'extract_dir' in locals() and extract_dir.exists():
-                        shutil.rmtree(extract_dir, ignore_errors=True)
-                else:
-                    if 'installer_path' in locals() and installer_path.exists():
-                        installer_path.unlink()
+                if 'installer_path' in locals() and installer_path.exists():
+                    installer_path.unlink()
             except OSError:
                 # 忽略文件删除错误
                 pass
