@@ -5,6 +5,7 @@ Elan 工具链管理器
 
 import os
 import requests
+import zipfile
 from pathlib import Path
 from typing import Optional, List, Dict
 import subprocess
@@ -69,9 +70,9 @@ class ElanManager:
         base_url = "https://raw.githubusercontent.com/leanprover/elan/master"
         
         if OS_TYPE == 'Windows':
-            # Windows 使用预编译的可执行文件
+            # Windows 使用预编译的压缩包
             github_releases = "https://github.com/leanprover/elan/releases/latest/download"
-            return f"{github_releases}/elan-x86_64-pc-windows-msvc.exe"
+            return f"{github_releases}/elan-x86_64-pc-windows-msvc.zip"
         else:
             # Linux 和 macOS 使用安装脚本
             return f"{base_url}/elan-init.sh"
@@ -120,8 +121,27 @@ class ElanManager:
             download_url = self.get_download_url(version)
             
             if OS_TYPE == 'Windows':
-                installer_path = temp_dir / 'elan-init.exe'
-                if not self.download_installer(download_url, installer_path):
+                zip_path = temp_dir / 'elan.zip'
+                if not self.download_installer(download_url, zip_path):
+                    return False
+                
+                # 解压缩 Windows 安装程序
+                logger.info("正在解压缩 elan 安装程序...")
+                extract_dir = temp_dir / 'elan_extract'
+                extract_dir.mkdir(exist_ok=True)
+                
+                with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                    zip_ref.extractall(extract_dir)
+                
+                # 查找可执行文件
+                installer_path = None
+                for file in extract_dir.iterdir():
+                    if file.name.endswith('.exe'):
+                        installer_path = file
+                        break
+                
+                if not installer_path:
+                    logger.error("在压缩包中未找到可执行文件")
                     return False
                 
                 # 运行 Windows 安装程序
@@ -166,8 +186,14 @@ class ElanManager:
         finally:
             # 清理临时文件
             try:
-                if 'installer_path' in locals() and installer_path.exists():
-                    installer_path.unlink()
+                if OS_TYPE == 'Windows':
+                    if 'zip_path' in locals() and zip_path.exists():
+                        zip_path.unlink()
+                    if 'extract_dir' in locals() and extract_dir.exists():
+                        shutil.rmtree(extract_dir, ignore_errors=True)
+                else:
+                    if 'installer_path' in locals() and installer_path.exists():
+                        installer_path.unlink()
             except OSError:
                 # 忽略文件删除错误
                 pass
