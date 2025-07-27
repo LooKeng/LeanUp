@@ -1,7 +1,4 @@
-import os
-import pytest
 from pathlib import Path
-import tempfile
 from leanup.const import OS_TYPE
 from leanup.utils.executor import CommandExecutor
 
