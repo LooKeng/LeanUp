@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 import tempfile
 from contextlib import contextmanager
-from typing import Optional, Union, Tuple, List, Dict, Any, Generator
+from typing import Optional, Union, Tuple, List, Generator
 import git
 from psutil import Process, NoSuchProcess
 import logging
@@ -50,11 +50,13 @@ class CommandExecutor:
         path = Path(path)
         path.mkdir(parents=True, exist_ok=True)
             
-        if chdir: os.chdir(path)
+        if chdir:
+            os.chdir(path)
         try:
             yield path
         finally:
-            if chdir: os.chdir(origin)
+            if chdir:
+                os.chdir(origin)
             if is_temporary:
                 tmp_dir.__exit__(None, None, None)
 
