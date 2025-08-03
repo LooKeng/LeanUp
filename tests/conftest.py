@@ -2,7 +2,7 @@ import tempfile
 import pytest
 from pathlib import Path
 from leanup.const import LEANUP_CACHE_DIR
-
+from leanup.cli.config import ConfigManager
 
 @pytest.fixture
 def cache_dir():
@@ -22,3 +22,18 @@ def mock_elan_home(temp_dir):
     elan_home.mkdir()
     (elan_home / 'bin').mkdir()
     return elan_home
+
+@pytest.fixture
+def mock_config_manager(temp_dir):
+    """Create a mock config manager for testing"""
+    config_dir = temp_dir / '.leanup'
+    config_manager = ConfigManager(config_dir=config_dir)
+    config_manager.init_config()
+    return config_manager
+
+@pytest.fixture
+def mock_repo_cache(temp_dir):
+    """Create a mock repository cache directory"""
+    cache_dir = temp_dir / 'repos'
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    return cache_dir

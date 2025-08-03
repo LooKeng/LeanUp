@@ -99,9 +99,7 @@ def status(ctx):
         # Show toolchains
         toolchains = elan_manager.get_installed_toolchains()
         if toolchains:
-            click.echo('Toolchains:')
-            for toolchain in toolchains:
-                click.echo(f"  - {toolchain}")
+            click.echo(f"Toolchains: {', '.join(toolchains)}")
         else:
             click.echo("Toolchains: none")
     else:

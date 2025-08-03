@@ -2,4 +2,4 @@
 
 __author__ = """Lean-zh Community"""
 __email__ = 'leanprover@outlook.com'
-__version__ = '0.0.4'
+__version__ = '0.1.0'
