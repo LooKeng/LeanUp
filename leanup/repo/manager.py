@@ -2,6 +2,7 @@ import subprocess
 from pathlib import Path
 from typing import Optional, Union, List, Dict, Any, Tuple
 import git
+import toml
 import platform
 
 from leanup.utils.basic import execute_command
@@ -324,4 +325,170 @@ class RepoManager:
             return False
 
 class LeanRepo(RepoManager):
-    pass
+    """Class for managing Lean repositories with lake support."""
+    
+    def __init__(self, cwd: Union[str, Path]):
+        """Initialize LeanRepo with working directory.
+        
+        Args:
+            cwd: Working directory path
+        """
+        super().__init__(cwd)
+        self._lean_version = None
+        self._dependencies = None
+    
+    def get_lean_toolchain(self) -> Optional[str]:
+        """Read lean-toolchain file to get Lean version.
+        
+        Returns:
+            str: Lean version if found, None otherwise
+        """
+        try:
+            toolchain_file = self.cwd / "lean-toolchain"
+            if toolchain_file.exists():
+                content = toolchain_file.read_text(encoding='utf-8').strip()
+                self._lean_version = content
+                logger.info(f"Found Lean toolchain: {content}")
+                return content
+            else:
+                logger.warning("lean-toolchain file not found")
+                return None
+        except Exception as e:
+            logger.error(f"Error reading lean-toolchain: {e}")
+            return None
+    
+    def parse_dependencies(self) -> Dict[str, Any]:
+        """Parse dependencies from lakefile.toml or lakefile.lean.
+        
+        Returns:
+            Dict containing parsed dependencies
+        """
+        dependencies = {}
+        
+        # Try lakefile.toml first
+        toml_file = self.cwd / "lakefile.toml"
+        if toml_file.exists():
+            try:
+                with open(toml_file, 'rb') as f:
+                    data = toml.load(f)
+                dependencies = data.get('require', {})
+                logger.info(f"Parsed dependencies from lakefile.toml: {len(dependencies)} items")
+            except Exception as e:
+                logger.error(f"Error parsing lakefile.toml: {e}")
+        
+        # Try lakefile.lean if toml not found or failed
+        elif (self.cwd / "lakefile.lean").exists():
+            try:
+                content = self.read_file("lakefile.lean")
+                # Simple parsing for require statements
+                import re
+                require_pattern = r'require\s+([\w\-]+)\s+from\s+git\s+"([^"]+)"(?:\s+@\s+"([^"]+)")?'
+                matches = re.findall(require_pattern, content)
+                
+                for match in matches:
+                    name, url, version = match
+                    dependencies[name] = {
+                        'git': url,
+                        'rev': version if version else 'main'
+                    }
+                
+                logger.info(f"Parsed dependencies from lakefile.lean: {len(dependencies)} items")
+            except Exception as e:
+                logger.error(f"Error parsing lakefile.lean: {e}")
+        
+        self._dependencies = dependencies
+        return dependencies
+    
+    def lake(self, args: List[str]) -> Tuple[str, str, int]:
+        """Execute lake command with given arguments.
+        
+        Args:
+            args: List of lake command arguments
+            
+        Returns:
+            Tuple containing stdout, stderr, and return code
+        """
+        command = ["lake"] + args
+        logger.info(f"Executing lake command: {' '.join(command)}")
+        return self.execute_command(command)
+    
+    def lake_build(self, target: Optional[str] = None) -> Tuple[str, str, int]:
+        """Build the Lean project using lake.
+        
+        Args:
+            target: Optional build target
+            
+        Returns:
+            Tuple containing stdout, stderr, and return code
+        """
+        args = ["build"]
+        if target:
+            args.append(target)
+        return self.lake(args)
+    
+    def lake_update(self) -> Tuple[str, str, int]:
+        """Update dependencies using lake.
+        
+        Returns:
+            Tuple containing stdout, stderr, and return code
+        """
+        return self.lake(["update"])
+    
+    def lake_env_lean(
+        self, 
+        filepath: Union[str, Path], 
+        js: bool = True, 
+        options: Optional[Dict[str, Any]] = None,
+        nproc:int =None) -> Tuple[str, str, int]:
+        """Run lean file with lake environment.
+        
+        Args:
+            filepath: Path to the Lean file
+            js: Whether to return JSON output, default is True
+            
+        Returns:
+            Tuple containing stdout, stderr, and return code
+        """
+        args = ["env", "lean"]
+        if js:
+            args.append("--json")
+        if options is not None:
+            opts = ["-D {}={}".format(k,v) for k,v in options.items()]
+            args += opts
+        if isinstance(nproc, int) and nproc > 0:
+            nproc += 1
+            args += ["-j", str(nproc)]
+        args.append(str(filepath))
+        return self.lake(args)
+    
+    def lake_clean(self) -> Tuple[str, str, int]:
+        """Clean build artifacts using lake.
+        
+        Returns:
+            Tuple containing stdout, stderr, and return code
+        """
+        return self.lake(["clean"])
+    
+    def lake_test(self) -> Tuple[str, str, int]:
+        """Run tests using lake.
+        
+        Returns:
+            Tuple containing stdout, stderr, and return code
+        """
+        return self.lake(["test"])
+    
+    def get_project_info(self) -> Dict[str, Any]:
+        """Get comprehensive project information.
+        
+        Returns:
+            Dict containing project information
+        """
+        info = {
+            'lean_version': self.get_lean_toolchain(),
+            'dependencies': self.parse_dependencies(),
+            'has_lakefile_toml': (self.cwd / "lakefile.toml").exists(),
+            'has_lakefile_lean': (self.cwd / "lakefile.lean").exists(),
+            'has_lake_manifest': (self.cwd / "lake-manifest.json").exists(),
+            'build_dir_exists': (self.cwd / ".lake").exists(),
+        }
+        return info

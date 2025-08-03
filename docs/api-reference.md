@@ -59,3 +59,64 @@ Get list of installed toolchains.
 
 ##### `get_status_info() -> Dict[str, any]`
 Get comprehensive elan status information.
+
+## leanup.repo.manager
+
+### RepoManager
+
+Base class for managing directory operations and git functionality.
+
+### LeanRepo
+
+A specialized repository manager for Lean projects, extending RepoManager with lake support.
+
+#### Methods
+
+##### `__init__(cwd: Union[str, Path])`
+Initialize LeanRepo with working directory.
+
+##### `get_lean_toolchain() -> Optional[str]`
+Read lean-toolchain file to get Lean version.
+
+**Returns:**
+Lean version string if found, None otherwise
+
+##### `parse_dependencies() -> Dict[str, Any]`
+Parse dependencies from lakefile.toml or lakefile.lean.
+
+**Returns:**
+Dictionary containing parsed dependencies
+
+##### `lake(args: List[str]) -> Tuple[str, str, int]`
+Execute lake command with given arguments.
+
+**Parameters:**
+- `args`: List of lake command arguments
+
+**Returns:**
+Tuple containing stdout, stderr, and return code
+
+##### `lake_build(target: Optional[str] = None) -> Tuple[str, str, int]`
+Build the Lean project using lake.
+
+**Parameters:**
+- `target`: Optional build target
+
+##### `lake_update() -> Tuple[str, str, int]`
+Update dependencies using lake.
+
+##### `lake_env_lean(filepath: Union[str, Path], js: bool = True) -> Tuple[str, str, int]`
+Run lean file with lake environment.
+
+**Parameters:**
+- `filepath`: Path to the Lean file
+- `js`: Whether to use JavaScript backend (default: True)
+
+##### `lake_clean() -> Tuple[str, str, int]`
+Clean build artifacts using lake.
+
+##### `lake_test() -> Tuple[str, str, int]`
+Run tests using lake.
+
+##### `get_project_info() -> Dict[str, Any]`
+Get comprehensive project information including Lean version, dependencies, and file status.
