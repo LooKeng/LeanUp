@@ -4,17 +4,43 @@ A Python package for managing Lean mathematical proof language environments.
 
 ## Features
 
-- **🔧 elan management**: Install and manage the Lean toolchain manager elan with a single command
-- **🌍 Cross-platform support**: Works on Linux, macOS, and Windows
-- **📦 Easy to use**: Quick installation via `pip install -e /path/to/LeanUp`
-- **🔄 Command proxy**: Transparent proxy for all elan commands with streaming output support
-- **📊 Status monitoring**: Real-time view of Lean environment status and installed toolchains
+- **🔧 elan Management**: Install and manage the Lean toolchain manager elan with a single command
+- **📦 Repository Management**: Install and manage Lean repositories with interactive configuration
+- **🌍 Cross-platform Support**: Works on Linux, macOS, and Windows
+- **📦 Easy Installation**: Quick setup via `pip install -e /path/to/LeanUp`
+- **🔄 Command Proxy**: Transparent proxy for all elan commands with streaming output support
+- **📊 Status Monitoring**: Real-time view of Lean environment status and installed toolchains
+- **⚙️ Configuration Management**: Flexible configuration system with interactive setup
 
 ## Quick Start
 
 Check the [Quick Start](getting-started/quickstart.md) guide to begin using LeanUp.
 
+## Command Line Interface
+
+LeanUp provides a comprehensive CLI with the following commands:
+
+### Main Commands
+
+- `leanup init` - Initialize LeanUp configuration
+- `leanup install [version]` - Install elan toolchain manager
+- `leanup status` - Show current status and configuration
+- `leanup elan <args>` - Proxy elan commands
+
+### Repository Management
+
+- `leanup repo install <repository>` - Install Lean repositories
+- `leanup repo list` - List installed repositories
+
 ## Modules
+
+### CLI Module
+
+The `leanup.cli` module provides the command-line interface:
+
+- **Main CLI**: Core commands for elan management and status monitoring
+- **Repository CLI**: Commands for managing Lean repositories
+- **Configuration**: Centralized configuration management
 
 ### Utils Module
 
@@ -42,8 +68,8 @@ The `leanup.repo` module provides functionality for repository management:
 
 LeanUp is built with a modular architecture:
 
+- **CLI layer**: Command-line interface for user interactions
 - **Utils layer**: Core utility functions for command execution and logging
 - **Repo layer**: High-level abstractions for repository and toolchain management
-- **CLI layer**: Command-line interface for user interactions
 
 The package uses the `execute_command` utility function from the utils module for all command execution, ensuring consistent behavior across different platforms and components.

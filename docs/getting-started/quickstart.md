@@ -14,21 +14,56 @@ pip install -e .
 
 ## Basic Usage
 
-```bash
-# View help
-leanup --help
+### Initialize Configuration
 
-# Install elan (Lean toolchain manager)
+```bash
+# Initialize LeanUp configuration
+leanup init
+
+# View current status
+leanup status
+```
+
+### Install elan
+
+```bash
+# Install latest version of elan
 leanup install
 
-# View status
-leanup status
+# Install specific version
+leanup install v1.4.2
 
+# Force reinstall
+leanup install --force
+```
+
+### Manage Toolchains
+
+```bash
 # Proxy execute elan commands
 leanup elan --help
 leanup elan toolchain list
 leanup elan toolchain install stable
 leanup elan default stable
+```
+
+### Repository Management
+
+```bash
+# Install a repository
+leanup repo install mathlib4
+
+# Install with interactive configuration
+leanup repo install mathlib4 --interactive
+
+# Install from specific source
+leanup repo install mathlib4 --source github
+
+# Install from URL
+leanup repo install --url https://github.com/leanprover-community/mathlib4.git
+
+# List installed repositories
+leanup repo list
 ```
 
 ## Using the RepoManager
@@ -65,3 +100,13 @@ repo.edit_file("example.txt", "Hello", "Hi")
 stdout, stderr, returncode = repo.execute_command("ls -la")
 print(stdout)
 ```
+
+## Configuration
+
+LeanUp uses a configuration file at `~/.leanup/config.toml`. The configuration includes:
+
+- Repository settings (default source, cache directory)
+- elan settings (auto-installation)
+- Interactive installation preferences
+
+You can modify the configuration manually or use the interactive installation mode to set preferences.
