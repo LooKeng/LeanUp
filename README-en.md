@@ -50,10 +50,10 @@ pip install -e .
 # View help
 leanup --help
 
-# Initialize configuration
+# Install elan and initialize configuration
 leanup init
 
-# Install elan (Lean toolchain manager)
+# Install latest stable version
 leanup install
 
 # View status

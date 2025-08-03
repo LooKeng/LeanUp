@@ -61,9 +61,12 @@ def install(version: Optional[str], force: bool):
         # Install latest stable version
         click.echo("Installing latest Lean toolchain...")
         try:
-            for line in elan_manager.proxy_elan_command(['toolchain', 'install', 'stable']):
-                click.echo(line, nl=False)
-            click.echo("✓ Latest Lean toolchain installed")
+            result = elan_manager.proxy_elan_command(['toolchain', 'install', 'stable'])
+            if result == 0:
+                click.echo("✓ Latest Lean toolchain installed")
+            else:
+                click.echo("✗ Failed to install Lean toolchain", err=True)
+                sys.exit(1)
         except Exception as e:
             click.echo(f"✗ Failed to install Lean toolchain: {e}", err=True)
             sys.exit(1)
@@ -74,9 +77,12 @@ def install(version: Optional[str], force: bool):
             cmd = ['toolchain', 'install', version]
             if force:
                 cmd.append('--force')
-            for line in elan_manager.proxy_elan_command(cmd):
-                click.echo(line, nl=False)
-            click.echo(f"✓ Lean toolchain {version} installed")
+            result = elan_manager.proxy_elan_command(cmd)
+            if result == 0:
+                click.echo(f"✓ Lean toolchain {version} installed")
+            else:
+                click.echo(f"✗ Failed to install Lean toolchain {version}", err=True)
+                sys.exit(1)
         except Exception as e:
             click.echo(f"✗ Failed to install Lean toolchain {version}: {e}", err=True)
             sys.exit(1)
@@ -124,8 +130,8 @@ def elan(args):
     
     # Execute elan command
     try:
-        for line in elan_manager.proxy_elan_command(list(args)):
-            click.echo(line, nl=False)
+        result = elan_manager.proxy_elan_command(list(args))
+        sys.exit(result)
     except KeyboardInterrupt:
         click.echo("\nInterrupted", err=True)
         sys.exit(1)

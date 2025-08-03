@@ -17,8 +17,14 @@ pip install -e .
 ### Initialize Configuration
 
 ```bash
-# Initialize LeanUp configuration
+# View help
+leanup --help
+
+# Install elan and initialize configuration
 leanup init
+
+# Install latest stable version
+leanup install
 
 # View current status
 leanup status
@@ -83,22 +89,40 @@ if repo.is_gitrepo:
     print(f"Current branch: {status['branch']}")
 else:
     print("This is not a git repository")
-    # Clone from remote
-    repo.clone_from("https://github.com/username/repo.git")
+
+# Clone a repository
+repo.clone_from("https://github.com/user/repo.git")
 
 # Read a file
 content = repo.read_file("README.md")
-print(content)
 
-# Write to a file
-repo.write_file("example.txt", "Hello, World!")
-
-# Edit a file
-repo.edit_file("example.txt", "Hello", "Hi")
+# Write a file
+repo.write_file("test.txt", "Hello World")
 
 # Execute a command
-stdout, stderr, returncode = repo.execute_command("ls -la")
-print(stdout)
+result = repo.execute_command(["ls", "-la"])
+```
+
+## Using LeanRepo
+
+The `LeanRepo` class is specialized for Lean project management:
+
+```python
+from leanup.repo import LeanRepo
+
+# Initialize Lean project manager
+lean_repo = LeanRepo("/path/to/lean/project")
+
+# Get Lean toolchain version
+toolchain = lean_repo.get_lean_toolchain()
+print(f"Lean toolchain: {toolchain}")
+
+# Execute lake commands
+lean_repo.lake_update()
+lean_repo.lake_build()
+
+# Execute custom lake commands
+result = lean_repo.lake(["build", "MyPackage"])
 ```
 
 ## Configuration

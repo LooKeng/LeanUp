@@ -1,5 +1,34 @@
 # API Reference
 
+## leanup.cli.config
+
+### ConfigManager
+
+A class for managing LeanUp configuration.
+
+#### Methods
+
+##### `__init__(config_dir: Optional[Path] = None)`
+Initialize ConfigManager with optional config directory.
+
+##### `config_exists() -> bool`
+Check if configuration file exists.
+
+##### `init_config() -> bool`
+Initialize configuration file with default values.
+
+##### `load_config() -> Dict[str, Any]`
+Load configuration from file.
+
+##### `save_config(config: Dict[str, Any]) -> bool`
+Save configuration to file.
+
+##### `get_cache_dir() -> Path`
+Get cache directory path.
+
+##### `get_default_source() -> str`
+Get default repository source URL.
+
 ## leanup.utils.basic
 
 ### execute_command
