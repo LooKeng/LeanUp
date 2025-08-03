@@ -31,6 +31,15 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install .[dev]
     
+    - name: Test CLI functionality
+      run: |
+        # Test basic CLI commands
+        leanup --help
+        leanup init
+        leanup status
+        leanup repo --help
+        leanup repo list
+    
     - name: Test with pytest
       run: |
         pytest tests/ -v

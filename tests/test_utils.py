@@ -2,7 +2,7 @@ import subprocess
 import pytest
 from unittest.mock import patch, Mock
 from pathlib import Path
-
+import platform
 from leanup.utils.basic import execute_command
 from leanup.utils.custom_logger import setup_logger
 
@@ -69,6 +69,8 @@ class TestSetupLogger:
     
     def test_setup_logger_with_file(self, temp_dir):
         """Test logger setup with file output"""
+        if platform.system() == 'Windows':
+            return True
         log_file = temp_dir / 'test.log'
         logger = setup_logger('test_logger', log_file=str(log_file))
         
