@@ -13,3 +13,6 @@ elif platform.system() == 'Linux':
 
 LEANUP_CACHE_DIR = Path(
     os.getenv('LEANUP_CACHE_DIR', platformdirs.user_cache_dir("leanup")))
+
+# Ensure cache directory exists
+LEANUP_CACHE_DIR.mkdir(parents=True, exist_ok=True)
