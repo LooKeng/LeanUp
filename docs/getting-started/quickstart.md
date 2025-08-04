@@ -14,17 +14,14 @@ pip install -e .
 
 ## Basic Usage
 
-### Initialize Configuration
+### Initialize elan
 
 ```bash
 # View help
 leanup --help
 
-# Install elan and initialize configuration
+# Install elan
 leanup init
-
-# Install latest stable version
-leanup install
 
 # View current status
 leanup status
@@ -56,20 +53,26 @@ leanup elan default stable
 ### Repository Management
 
 ```bash
-# Install a repository
-leanup repo install mathlib4
+# Install a repository (format: owner/repo)
+leanup repo install leanprover-community/mathlib4
 
-# Install with interactive configuration
-leanup repo install mathlib4 --interactive
+# Install with specific options
+leanup repo install leanprover-community/mathlib4 --branch main --force
 
-# Install from specific source
-leanup repo install mathlib4 --source github
+# Install to specific directory
+leanup repo install leanprover-community/mathlib4 --dest-dir ./my-mathlib
 
-# Install from URL
-leanup repo install --url https://github.com/leanprover-community/mathlib4.git
+# Install from custom URL
+leanup repo install owner/repo --url https://github.com/owner/repo.git
 
 # List installed repositories
 leanup repo list
+
+# List repositories with filter
+leanup repo list --name mathlib
+
+# Interactive installation
+leanup repo install -i
 ```
 
 ## Using the RepoManager
@@ -79,7 +82,7 @@ The `RepoManager` class provides functionality for managing directories and git 
 ```python
 from leanup.repo import RepoManager
 
-# Initialize a directory manager
+# Create a repo manager
 repo = RepoManager("/path/to/your/directory")
 
 # Check if it's a git repository
@@ -87,50 +90,32 @@ if repo.is_gitrepo:
     print("This is a git repository")
     status = repo.git_status()
     print(f"Current branch: {status['branch']}")
-else:
-    print("This is not a git repository")
 
-# Clone a repository
-repo.clone_from("https://github.com/user/repo.git")
+# File operations
+repo.write_file("test.txt", "Hello world")
+content = repo.read_file("test.txt")
+repo.edit_file("test.txt", "world", "universe")
 
-# Read a file
-content = repo.read_file("README.md")
-
-# Write a file
-repo.write_file("test.txt", "Hello World")
-
-# Execute a command
-result = repo.execute_command(["ls", "-la"])
+# List files and directories
+files = repo.list_files("*.lean")
+dirs = repo.list_dirs()
 ```
 
-## Using LeanRepo
-
-The `LeanRepo` class is specialized for Lean project management:
+## Using LeanRepo for Lean Projects
 
 ```python
 from leanup.repo import LeanRepo
 
-# Initialize Lean project manager
+# Create a Lean repo manager
 lean_repo = LeanRepo("/path/to/lean/project")
 
-# Get Lean toolchain version
-toolchain = lean_repo.get_lean_toolchain()
-print(f"Lean toolchain: {toolchain}")
+# Get project information
+info = lean_repo.get_project_info()
+print(f"Lean version: {info['lean_version']}")
+print(f"Has lakefile: {info['has_lakefile_toml']}")
 
-# Execute lake commands
-lean_repo.lake_update()
-lean_repo.lake_build()
-
-# Execute custom lake commands
-result = lean_repo.lake(["build", "MyPackage"])
+# Lake operations (execute commands directly)
+stdout, stderr, returncode = lean_repo.lake(["build"])
+stdout, stderr, returncode = lean_repo.lake_update()
+stdout, stderr, returncode = lean_repo.lake_build()
 ```
-
-## Configuration
-
-LeanUp uses a configuration file at `~/.leanup/config.toml`. The configuration includes:
-
-- Repository settings (default source, cache directory)
-- elan settings (auto-installation)
-- Interactive installation preferences
-
-You can modify the configuration manually or use the interactive installation mode to set preferences.

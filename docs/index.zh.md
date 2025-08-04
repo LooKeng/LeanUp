@@ -4,13 +4,10 @@
 
 ## 功能特性
 
-- **🔧 elan 管理**: 一键安装和管理 Lean 工具链管理器 elan
-- **📦 仓库管理**: 通过交互式配置安装和管理 Lean 仓库
+- **🔧 elan 管理**: 安装和管理 Lean 工具链管理器 elan
+- **📦 仓库管理**: 安装和管理 Lean 仓库
 - **🌍 跨平台支持**: 支持 Linux、macOS 和 Windows
-- **📦 简单易用**: 通过 `pip install -e /path/to/LeanUp` 快速安装
-- **🔄 命令代理**: 透明代理所有 elan 命令，支持流式输出
-- **📊 状态监控**: 实时查看 Lean 环境状态和已安装工具链
-- **⚙️ 配置管理**: 灵活的配置系统，支持交互式设置
+- **📦 简单易用**: 通过 `pip install leanup` 快速安装
 
 ## 快速开始
 
@@ -22,14 +19,14 @@ LeanUp 提供了完整的 CLI，包含以下命令：
 
 ### 主要命令
 
-- `leanup init` - 初始化 LeanUp 配置
+- `leanup init` - 初始化 elan 安装
 - `leanup install [version]` - 安装 Lean 工具链版本（通过 elan）
-- `leanup status` - 显示当前状态和配置
+- `leanup status` - 显示当前状态和已安装工具链
 - `leanup elan <args>` - 代理 elan 命令
 
 ### 仓库管理
 
-- `leanup repo install <repository>` - 安装 Lean 仓库
+- `leanup repo install <repository>` - 安装 Lean 仓库（格式：owner/repo）
 - `leanup repo list` - 列出已安装的仓库
 
 ## 模块
@@ -40,7 +37,6 @@ LeanUp 提供了完整的 CLI，包含以下命令：
 
 - **主 CLI**: elan 管理和状态监控的核心命令
 - **仓库 CLI**: 管理 Lean 仓库的命令
-- **配置**: 集中化配置管理
 
 ### Utils 模块
 
@@ -53,9 +49,6 @@ LeanUp 提供了完整的 CLI，包含以下命令：
 
 `leanup.repo` 模块提供了仓库管理功能：
 
-- `RepoManager`: 用于管理目录操作和 git 功能的类
-  - 文件操作（读取、写入、编辑）
-  - 命令执行
-  - Git 操作（克隆、状态、添加、提交、拉取、推送）
-- `LeanRepo`: 专门用于 Lean 项目的仓库管理器，扩展了 RepoManager 并支持 lake 功能
-- `ElanManager`: 管理 Lean 工具链管理器 elan 的类
+- `RepoManager`: 目录和 git 操作的基础类
+- `LeanRepo`: 专门用于 Lean 项目管理的类，支持 lake 操作
+- `ElanManager`: 管理 elan 安装和工具链操作

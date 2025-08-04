@@ -18,39 +18,44 @@ def repo():
 
 
 @repo.command()
-@click.argument('repository', required=True)
+@click.argument('repository', required=False)
 @click.option('--source', '-s', help='Repository source', default='https://github.com')
-@click.option('--url', '-u', help='Complete repository URL')
 @click.option('--branch', '-b', help='Branch or tag to clone')
 @click.option('--force', '-f', is_flag=True, help='Replace existing directory')
 @click.option('--dest-dir', '-d', help='Destination directory', type=click.Path(path_type=Path))
 @click.option('--interactive', '-i', is_flag=True, help='Interactive mode')
-def install(repository: str, source: str, url: Optional[str], 
-           branch: Optional[str], force: bool, dest_dir: Optional[Path], interactive: bool):
-    """Install a repository (format: owner/repo)"""
+def install(repository: str, source: str, branch: Optional[str], force: bool,
+            dest_dir: Optional[Path], interactive: bool):
+    """Install a repository"""
+    if interactive:
+        if repository:
+            click.echo(f"Repository name: {repository}")
+        else:
+            repository = click.prompt("Repository name(required)", type=str)
+        source = click.prompt("Repository source", type=str, default=source)
+        branch = click.prompt("Branch or tag", type=str, default=branch or "")
     
-    # Validate repository format
-    if '/' not in repository or repository.count('/') != 1:
-        click.echo("Error: Repository must be in format 'owner/repo'", err=True)
+    if not repository:
+        click.echo("Error: Repository name is required", err=True)
         sys.exit(1)
-    
+
     # Determine URL
-    if url:
-        repo_url = url
-    else:
-        repo_url = f"{source.rstrip('/')}/{repository}"
-    
+    repo_url = f"{source.rstrip('/')}/{repository}"
     # Determine destination directory
     if dest_dir:
         dest_path = dest_dir
     else:
-        repository = repository.replace('/', '_')
+        repository = repository.replace('/', '_').lower()
         # Default to current directory + repo name
         dir_name = f"{repository}_{branch}" if branch else repository
         dest_path = LEANUP_CACHE_DIR / "repos" / dir_name
+    if interactive:
+        dest_path = click.prompt("Destination directory", type=click.Path(path_type=Path), default=dest_path)
     
     # Check if directory exists
     if dest_path.exists():
+        if interactive:
+            force = click.confirm("Repository already exists. Replace it?", default=force)
         if not force:
             click.echo(f"Directory {dest_path} already exists. Use --force to replace.", err=True)
             sys.exit(1)
@@ -114,7 +119,7 @@ def install(repository: str, source: str, url: Optional[str],
 
 
 @repo.command()
-@click.option('--name', '-n', help='Filter by repository name (owner/repo)')
+@click.option('--name', '-n', help='Filter by repository name')
 @click.option('--search-dir', '-d', help='Directory to search for repositories', 
               type=click.Path(exists=True, file_okay=False, dir_okay=True, path_type=Path),
               default=LEANUP_CACHE_DIR / "repos")

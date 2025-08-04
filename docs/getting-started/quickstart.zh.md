@@ -14,17 +14,14 @@ pip install -e .
 
 ## 基础使用
 
-### 初始化配置
+### 初始化 elan
 
 ```bash
 # 查看帮助
 leanup --help
 
-# 安装 elan 并初始化配置
+# 安装 elan
 leanup init
-
-# 安装最新稳定版本
-leanup install
 
 # 查看当前状态
 leanup status
@@ -56,20 +53,23 @@ leanup elan default stable
 ### 仓库管理
 
 ```bash
-# 安装仓库
-leanup repo install mathlib4
+# 安装仓库（格式：owner/repo）
+leanup repo install leanprover-community/mathlib4
 
-# 使用交互式配置安装
-leanup repo install mathlib4 --interactive
+# 使用特定选项安装
+leanup repo install leanprover-community/mathlib4 --branch main --force
 
-# 从特定源安装
-leanup repo install mathlib4 --source github
-
-# 从 URL 安装
-leanup repo install --url https://github.com/leanprover-community/mathlib4.git
+# 安装到指定目录
+leanup repo install leanprover-community/mathlib4 --dest-dir ./my-mathlib
 
 # 列出已安装的仓库
 leanup repo list
+
+# 使用过滤器列出仓库
+leanup repo list --name mathlib
+
+# 交互式安装
+leanup repo install -i
 ```
 
 ## 使用 RepoManager
@@ -79,48 +79,40 @@ leanup repo list
 ```python
 from leanup.repo import RepoManager
 
-# 初始化一个目录管理器
+# 创建仓库管理器
 repo = RepoManager("/path/to/your/directory")
 
-# 检查是否为git仓库
+# 检查是否为 git 仓库
 if repo.is_gitrepo:
-    print("这是一个git仓库")
+    print("这是一个 git 仓库")
     status = repo.git_status()
     print(f"当前分支: {status['branch']}")
-else:
-    print("这不是一个git仓库")
 
-# 克隆仓库
-repo.clone_from("https://github.com/user/repo.git")
+# 文件操作
+repo.write_file("test.txt", "Hello world")
+content = repo.read_file("test.txt")
+repo.edit_file("test.txt", "world", "universe")
 
-# 读取文件
-content = repo.read_file("README.md")
-
-# 写入文件
-repo.write_file("test.txt", "Hello World")
-
-# 执行命令
-result = repo.execute_command(["ls", "-la"])
+# 列出文件和目录
+files = repo.list_files("*.lean")
+dirs = repo.list_dirs()
 ```
 
-## 使用 LeanRepo
-
-`LeanRepo` 类专门用于 Lean 项目管理：
+## 使用 LeanRepo 管理 Lean 项目
 
 ```python
 from leanup.repo import LeanRepo
 
-# 初始化 Lean 项目管理器
+# 创建 Lean 仓库管理器
 lean_repo = LeanRepo("/path/to/lean/project")
 
-# 获取 Lean 工具链版本
-toolchain = lean_repo.get_lean_toolchain()
-print(f"Lean 工具链: {toolchain}")
+# 获取项目信息
+info = lean_repo.get_project_info()
+print(f"Lean 版本: {info['lean_version']}")
+print(f"有 lakefile: {info['has_lakefile_toml']}")
 
-# 执行 lake 命令
-lean_repo.lake_update()
-lean_repo.lake_build()
-
-# 执行自定义 lake 命令
-result = lean_repo.lake(["build", "MyPackage"])
+# Lake 操作（直接执行命令）
+stdout, stderr, returncode = lean_repo.lake(["build"])
+stdout, stderr, returncode = lean_repo.lake_update()
+stdout, stderr, returncode = lean_repo.lake_build()
 ```
