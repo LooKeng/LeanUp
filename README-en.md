@@ -23,10 +23,12 @@
 ## 🎯 Features
 
 - **🔧 elan Management**: One-click installation and management of Lean toolchain manager elan
-- **🌍 Cross-platform Support**: Supports Linux, macOS, and Windows
+- **📦 Repository Management**: Install and manage Lean repositories with interactive configuration
+- **🌍 Cross-platform Support**: Works on Linux, macOS, and Windows
 - **📦 Easy Installation**: Quick setup via `pip install -e /path/to/LeanUp`
-- **🔄 Command Proxy**: Transparent proxy for all elan commands, seamless experience
+- **🔄 Command Proxy**: Transparent proxy for all elan commands with seamless experience
 - **📊 Status Monitoring**: Real-time view of Lean environment status and installed toolchains
+- **⚙️ Configuration Management**: Flexible configuration system with interactive setup
 
 ## 🚀 Quick Start
 
@@ -36,7 +38,7 @@
 # Install from source
 pip install -e /path/to/LeanUp
 
-# Or clone and install
+# Or clone the repository and install
 git clone https://github.com/Lean-zh/LeanUp.git
 cd LeanUp
 pip install -e .
@@ -45,16 +47,19 @@ pip install -e .
 ### Basic Usage
 
 ```bash
-# Show help
+# View help
 leanup --help
 
-# Initialize Lean environment (install elan toolchain manager)
+# Install elan and initialize configuration
 leanup init
 
-# Check status
+# Install latest stable version
+leanup install
+
+# View status
 leanup status
 
-# Proxy elan commands
+# Proxy execute elan commands
 leanup elan --help
 leanup elan toolchain list
 leanup elan toolchain install stable
@@ -63,22 +68,32 @@ leanup elan default stable
 
 ## 📖 Detailed Usage Guide
 
-### Initializing Environment
+### Configuration Management
 
 ```bash
-# Initialize environment with latest version of elan
+# Initialize LeanUp configuration
 leanup init
 
-# Force reinitialization
-leanup init --force
+# View current status and configuration
+leanup status
+```
 
-# Initialize without modifying shell config files
-leanup init --no-modify-path
+### Installing elan
+
+```bash
+# Install latest version of elan
+leanup install
+
+# Install specific version
+leanup install v1.4.2
+
+# Force reinstall
+leanup install --force
 ```
 
 ### Managing Lean Toolchains
 
-After initializing the environment, you can use `leanup elan` commands to manage Lean toolchains:
+After installing elan, you can use `leanup elan` commands to manage Lean toolchains:
 
 ```bash
 # List all available toolchains
@@ -100,10 +115,49 @@ leanup elan update
 leanup elan show
 ```
 
+### Repository Management
+
+```bash
+# Install a repository from default source
+leanup repo install mathlib4
+
+# Install with interactive configuration
+leanup repo install mathlib4 --interactive
+
+# Install from specific source
+leanup repo install mathlib4 --source github
+
+# Install from full URL
+leanup repo install --url https://github.com/leanprover-community/mathlib4.git
+
+# Install specific branch or tag
+leanup repo install mathlib4 --branch v4.3.0
+
+# Force replace existing directory
+leanup repo install mathlib4 --force
+
+# Install to custom directory
+leanup repo install mathlib4 --dest-dir /path/to/custom/dir
+
+# List installed repositories
+leanup repo list
+```
+
+### Interactive Installation
+
+When using `--interactive` flag with `leanup repo install`, you can configure:
+
+- Repository prefix (e.g., `leanprover-community/`)
+- Base URL for repository sources
+- Cache directory for storing repositories
+- Whether to run `lake update` after cloning
+- Whether to run `lake build` after cloning
+- Specific build packages to compile
+
 ### Project Management
 
 ```bash
-# Set specific toolchain for project
+# Set specific toolchain for a project
 cd your-lean-project
 leanup elan override set stable
 
@@ -138,15 +192,14 @@ coverage run -m pytest tests/
 coverage report -m
 ```
 
-### Code Quality Checks
+## ⚙️ Configuration
 
-```bash
-# Code style check
-ruff check .
+LeanUp uses a configuration file located at `~/.leanup/config.toml`. You can customize:
 
-# Type checking
-mypy .
-```
+- Default repository source
+- Cache directory for repositories
+- Auto-installation settings for elan
+- Repository prefixes and base URLs
 
 ## 🌍 Cross-platform Support
 
@@ -161,18 +214,20 @@ LeanUp is tested on the following platforms:
 | Feature | Status | Description |
 |---------|--------|-------------|
 | elan Installation | ✅ | Supports automatic platform and version detection |
-| Command Proxy | ✅ | Transparent passthrough of all elan commands |
-| Cross-platform | ✅ | Linux/macOS/Windows |
+| Command Proxy | ✅ | Transparent forwarding of all elan commands |
+| Repository Management | ✅ | Install and manage Lean repositories |
+| Interactive Configuration | ✅ | User-friendly setup process |
+| Cross-platform Support | ✅ | Linux/macOS/Windows |
 | Unit Tests | ✅ | Coverage > 85% |
 | CI/CD | ✅ | GitHub Actions multi-platform testing |
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please see [Contributing Guide](CONTRIBUTING.md) for details.
+Contributions are welcome! Please see the [Contributing Guide](CONTRIBUTING.md) for details.
 
 ## 📝 License
 
-This project is licensed under the MIT License. See [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ## 🔗 Related Links
 
