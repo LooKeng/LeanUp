@@ -1,7 +1,7 @@
 site_name: LeanUp Documentation
 site_description: Python package for Lean Environment Management
 site_author: Lean-zh Community
-site_url: https://github.com/Lean-zh/LeanUp
+site_url: https://www.leanprover.cn/LeanUp/
 
 repo_name: Lean-zh/LeanUp
 repo_url: https://github.com/Lean-zh/LeanUp
@@ -50,11 +50,11 @@ plugins:
           default: true
           name: English
           build: true
-          site_name: "LeanUp Documentation (en)"
+          site_name: "LeanUp Documentation"
         - locale: zh
           name: 中文
           build: true
-          site_name: "LeanUp 文档 (zh)"
+          site_name: "LeanUp 文档"
           nav_translations:
             Home: 首页
             Getting Started: 开始使用
