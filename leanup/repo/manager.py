@@ -1,12 +1,14 @@
 import subprocess
 import re
 from pathlib import Path
+from token import OP
 from typing import Optional, Union, List, Dict, Any, Tuple
 import git
 import toml
-
 from leanup.utils.basic import execute_command
 from leanup.utils.custom_logger import setup_logger
+from .elan import ElanManager
+
 
 logger = setup_logger("repo_manager")
 
@@ -19,7 +21,7 @@ class RepoManager:
         Args:
             cwd: Working directory path
         """
-        self.cwd = Path(cwd).absolute()
+        self.cwd = Path(cwd).resolve()
         self._git_repo = None
         self._check_git_repo()
     
@@ -74,6 +76,27 @@ class RepoManager:
                 return False
         except Exception as e:
             logger.error(f"Error cloning repository: {e}")
+            return False
+    
+    def clone_from_path(self, path: Union[str, Path]) -> bool:
+        """Clone a git repository from a local path.
+        
+        Args:
+            path: Local path to the git repository
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            path = Path(path).resolve()
+            if path.resolve() == Path().resolve():
+                logger.error("Cannot clone repository from current directory")
+                return False
+            # Clone repository
+            git.Repo.clone_from(str(path), str(self.cwd))
+            return True
+        except Exception as e:
+            logger.error(f"Error cloning repository from path: {e}")
             return False
     
     def execute_command(self, command: Union[str, List[str]]) -> Tuple[str, str, int]:
@@ -148,7 +171,6 @@ class RepoManager:
             content = path.read_text(encoding='utf-8')
             
             if use_regex:
-                import re
                 new_content = re.sub(find_text, replace_text, content)
             else:
                 new_content = content.replace(find_text, replace_text)
@@ -196,7 +218,6 @@ class RepoManager:
         """
         if not self.is_gitrepo:
             return {"error": "Not a git repository"}
-        
         try:
             return {
                 "branch": self._git_repo.active_branch.name,
@@ -206,7 +227,16 @@ class RepoManager:
             }
         except Exception as e:
             return {"error": str(e)}
-    
+
+    def git_init(self) -> bool:
+        """Initialize git repository."""
+        try:
+            self._git_repo = git.Repo.init(str(self.cwd))
+            return True
+        except Exception as e:
+            logger.error(f"Error initializing git repository: {e}")
+            return False
+
     def git_add(self, paths: Union[str, List[str], None] = None) -> bool:
         """Add files to git staging area.
         
@@ -217,7 +247,7 @@ class RepoManager:
             bool: True if successful, False otherwise
         """
         if not self.is_gitrepo:
-            logger.error("Not a git repository")
+            logger.warning("Not a git repository")
             return False
         try:
             if paths is None:
@@ -245,7 +275,7 @@ class RepoManager:
             bool: True if successful, False otherwise
         """
         if not self.is_gitrepo:
-            logger.error("Not a git repository")
+            logger.warning("Not a git repository")
             return False
         
         try:
@@ -266,7 +296,7 @@ class RepoManager:
             bool: True if successful, False otherwise
         """
         if not self.is_gitrepo:
-            logger.error("Not a git repository")
+            logger.warning("Not a git repository")
             return False
         
         try:
@@ -290,7 +320,7 @@ class RepoManager:
             bool: True if successful, False otherwise
         """
         if not self.is_gitrepo:
-            logger.error("Not a git repository")
+            logger.warning("Not a git repository")
             return False
         
         try:
@@ -313,8 +343,7 @@ class LeanRepo(RepoManager):
             cwd: Working directory path
         """
         super().__init__(cwd)
-        self._lean_version = None
-        self._dependencies = None
+        self.lean_version = self.get_lean_toolchain()
     
     def get_lean_toolchain(self) -> Optional[str]:
         """Read lean-toolchain file to get Lean version.
@@ -326,55 +355,14 @@ class LeanRepo(RepoManager):
             toolchain_file = self.cwd / "lean-toolchain"
             if toolchain_file.exists():
                 content = toolchain_file.read_text(encoding='utf-8').strip()
-                self._lean_version = content
-                logger.info(f"Found Lean toolchain: {content}")
+                logger.debug(f"Found Lean toolchain: {content}")
                 return content
             else:
-                logger.warning("lean-toolchain file not found")
+                logger.debug("lean-toolchain file not found")
                 return None
         except Exception as e:
             logger.error(f"Error reading lean-toolchain: {e}")
             return None
-    
-    def parse_dependencies(self) -> Dict[str, Any]:
-        """Parse dependencies from lakefile.toml or lakefile.lean.
-        
-        Returns:
-            Dict containing parsed dependencies
-        """
-        dependencies = {}
-        
-        # Try lakefile.toml first
-        toml_file = self.cwd / "lakefile.toml"
-        if toml_file.exists():
-            try:
-                with open(toml_file, 'rb') as f:
-                    data = toml.load(f)
-                dependencies = data.get('require', {})
-                logger.info(f"Parsed dependencies from lakefile.toml: {len(dependencies)} items")
-            except Exception as e:
-                logger.error(f"Error parsing lakefile.toml: {e}")
-        
-        # Try lakefile.lean if toml not found or failed
-        elif (self.cwd / "lakefile.lean").exists():
-            try:
-                content = self.read_file("lakefile.lean")
-                # Simple parsing for require statements
-                require_pattern = r'require\s+([\w\-]+)\s+from\s+git\s+"([^"]+)"(?:\s+@\s+"([^"]+)")?'
-                matches = re.findall(require_pattern, content)
-                for match in matches:
-                    name, url, version = match
-                    dependencies[name] = {
-                        'git': url,
-                        'rev': version if version else 'main'
-                    }
-                
-                logger.info(f"Parsed dependencies from lakefile.lean: {len(dependencies)} items")
-            except Exception as e:
-                logger.error(f"Error parsing lakefile.lean: {e}")
-        
-        self._dependencies = dependencies
-        return dependencies
     
     def lake(self, args: List[str]) -> Tuple[str, str, int]:
         """Execute lake command with given arguments.
@@ -386,8 +374,49 @@ class LeanRepo(RepoManager):
             Tuple containing stdout, stderr, and return code
         """
         command = ["lake"] + args
-        logger.info(f"Executing lake command: {' '.join(command)}")
+        logger.debug("Executing lake command: " + ' '.join(command))
         return self.execute_command(command)
+    
+    def lake_init(self,
+                  name: Optional[str] = None,
+                  template: Optional[str] = None,
+                  language: Optional[str] = None) -> Tuple[str, str, int]:
+        """Initialize lake repository.
+        
+        Args:
+            name: Repository name
+            template: Template name
+            language: Language name
+
+        The initial configuration and starter files are based on the template:
+
+            std    library and executable; default
+            exe    executable only
+            lib    library only
+            math   library only with a mathlib dependency
+        
+        Templates can be suffixed with `.lean` or `.toml` to produce a Lean or TOML
+        version of the configuration file, respectively. The default is Lean.
+
+        Returns:
+            Tuple containing stdout, stderr, and return code
+        """
+        if not self.cwd.exists():
+            self.cwd.mkdir(parents=True)
+        cmds = ["init"]
+        if name:
+            cmds.append(name)
+        if template:
+            assert name is not None, "Repository name is required when template is specified"
+            assert template in ["std", "exe", "lib", "math"], "Invalid template name"
+            cmds.append(template)
+        if language:
+            assert language in ["lean", "toml", '.lean', '.toml'], "Invalid language name"
+            if not language.startswith('.'):
+                language = '.' + language
+            if template is not None:
+                cmds[-1] += f".{language}"
+        return self.lake(cmds)
     
     def lake_build(self, target: Optional[str] = None) -> Tuple[str, str, int]:
         """Build the Lean project using lake.
@@ -433,7 +462,7 @@ class LeanRepo(RepoManager):
             opts = ["-D {}={}".format(k,v) for k,v in options.items()]
             args += opts
         if isinstance(nproc, int) and nproc > 0:
-            nproc += 1
+            # nproc += 1
             args += ["-j", str(nproc)]
         args.append(str(filepath))
         return self.lake(args)
@@ -462,10 +491,10 @@ class LeanRepo(RepoManager):
         """
         info = {
             'lean_version': self.get_lean_toolchain(),
-            'dependencies': self.parse_dependencies(),
             'has_lakefile_toml': (self.cwd / "lakefile.toml").exists(),
             'has_lakefile_lean': (self.cwd / "lakefile.lean").exists(),
             'has_lake_manifest': (self.cwd / "lake-manifest.json").exists(),
             'build_dir_exists': (self.cwd / ".lake").exists(),
         }
         return info
+

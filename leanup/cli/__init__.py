@@ -5,7 +5,6 @@ from typing import Optional
 
 from leanup.repo.elan import ElanManager
 from leanup.utils.custom_logger import setup_logger
-from leanup.cli.config import ConfigManager
 from leanup.cli.repo import repo
 
 logger = setup_logger("leanup_cli")
@@ -13,28 +12,15 @@ logger = setup_logger("leanup_cli")
 
 @click.group()
 @click.version_option()
-@click.option('--config-dir', '-c', type=click.Path(exists=False, file_okay=False, dir_okay=True, path_type=Path), 
-              help='Custom configuration directory')
 @click.pass_context
-def cli(ctx, config_dir):
+def cli(ctx):
     """LeanUp - Lean project management tool"""
     ctx.ensure_object(dict)
-    ctx.obj['config'] = ConfigManager(config_dir=config_dir)
 
 
 @cli.command()
-@click.pass_context
-def init(ctx):
-    """Initialize .leanup/config.yaml and install latest elan"""
-    config_manager = ctx.obj['config']
-    
-    # Initialize config
-    if config_manager.init_config():
-        click.echo("✓ Initialized .leanup/config.yaml")
-    else:
-        click.echo("✗ Failed to initialize config", err=True)
-        sys.exit(1)
-    
+def init():
+    """Install latest elan"""
     # Install elan
     elan_manager = ElanManager()
     if not elan_manager.is_elan_installed():
@@ -85,10 +71,8 @@ def install(version: Optional[str], force: bool):
 
 
 @cli.command()
-@click.pass_context
-def status(ctx):
+def status():
     """Show status information"""
-    config_manager = ctx.obj['config']
     elan_manager = ElanManager()
     
     click.echo("=== LeanUp Status ===")
@@ -106,12 +90,6 @@ def status(ctx):
             click.echo("Toolchains: none")
     else:
         click.echo("elan: ✗ not installed")
-    
-    # Config status
-    if config_manager.config_exists():
-        click.echo(f"Config: ✓ {config_manager.config_path}")
-    else:
-        click.echo("Config: ✗ not initialized")
 
 
 @cli.command(context_settings=dict(ignore_unknown_options=True))
@@ -132,9 +110,7 @@ def elan(args):
         click.echo("\nInterrupted", err=True)
         sys.exit(1)
 
-
 cli.add_command(repo)
-
 
 if __name__ == '__main__':
     cli()

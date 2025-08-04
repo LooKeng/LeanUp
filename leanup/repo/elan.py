@@ -12,7 +12,6 @@ from leanup.utils.custom_logger import setup_logger
 
 logger = setup_logger("elan_manager")
 
-
 class ElanManager:
     """Elan toolchain manager"""
 
@@ -60,16 +59,7 @@ class ElanManager:
             logger.error(f"Failed to get elan version: {e}")
             return None
     
-    def get_download_url(self, version: Optional[str] = None) -> str:
-        """Get elan installation script download URL"""
-        if OS_TYPE == 'Windows':
-            # Windows uses official PowerShell script
-            return "https://elan.lean-lang.org/elan-init.ps1"
-        else:
-            # Linux and macOS use official shell script
-            return "https://elan.lean-lang.org/elan-init.sh"
-    
-    def download_installer(self, url: str, target_path: Path) -> bool:
+    def download(self, url: str, target_path: Path) -> bool:
         """Download elan installer"""
         try:
             logger.info(f"Downloading elan installer: {url}")
@@ -82,10 +72,6 @@ class ElanManager:
             with open(target_path, 'wb') as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     f.write(chunk)
-            
-            # Give execution permission to installation script
-            if OS_TYPE != 'Windows':
-                target_path.chmod(0o755)
                 
             logger.info(f"Download completed: {target_path}")
             return True
@@ -94,11 +80,10 @@ class ElanManager:
             logger.error(f"Failed to download elan installer: {e}")
             return False
     
-    def install_elan(self, version: Optional[str] = None, force: bool = False) -> bool:
+    def install_elan(self, force: bool = False) -> bool:
         """Install elan with optional version specification.
         
         Args:
-            version: Specific version to install (default: latest)
             force: Force reinstall even if already installed
             
         Returns:
@@ -108,11 +93,7 @@ class ElanManager:
         if self.is_elan_installed() and not force:
             current_version = self.get_elan_version()
             logger.info(f"elan is already installed (version: {current_version})")
-            if version is None or current_version == version:
-                return True
-            logger.info(f"Installing specified version: {version}")
         try:
-            download_url = self.get_download_url(version)
             # Use working_directory context manager for temporary directory
             with working_directory() as temp_dir:
                 if OS_TYPE == 'Windows':
@@ -132,9 +113,10 @@ class ElanManager:
                     
                     cmd = ['powershell', '-ExecutionPolicy', 'Bypass', '-Command', script_content]
                 else:
+                    download_url = "https://elan.lean-lang.org/elan-init.sh"
                     # Linux/macOS use shell script installation
                     installer_path = temp_dir / 'elan-init.sh'
-                    if not self.download_installer(download_url, installer_path):
+                    if not self.download(download_url, installer_path):
                         return False
                     
                     logger.info("Running elan installation script...")
@@ -166,7 +148,8 @@ class ElanManager:
         elan_path = self.get_elan_executable()
         
         if not elan_path:
-            self.install_elan()
+            if not self.install_elan():
+                return 1
         
         # Build complete command
         cmd = [str(elan_path)] + args
@@ -215,5 +198,4 @@ class ElanManager:
             info['version'] = self.get_elan_version()
             info['executable'] = str(self.get_elan_executable())
             info['toolchains'] = self.get_installed_toolchains()
-        
         return info

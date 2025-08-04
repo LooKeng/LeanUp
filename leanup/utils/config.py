@@ -33,35 +33,10 @@ class ConfigManager:
     
     def init_config(self) -> bool:
         """Initialize config file with default settings"""
-        try:
-            # Create config directory
-            self.config_dir.mkdir(parents=True, exist_ok=True)
-            
-            # Default config
-            default_config = {
-                'repo': {
-                    'default_source': 'https://github.com',
-                    'cache_dir': str(LEANUP_CACHE_DIR / 'repos'),
-                    'prefix': '',
-                    'base_url': 'https://github.com',
-                    'lake_update': True,
-                    'lake_build': True,
-                    'build_packages': []
-                },
-                'elan': {
-                    'auto_install': True
-                }
-            }
-            
-            # Write config file
-            with open(self.config_path, 'w', encoding='utf-8') as f:
-                yaml.dump(default_config, f, default_flow_style=False)
-            
-            logger.info(f"Config initialized at {self.config_path}")
-            return True
-        except Exception as e:
-            logger.error(f"Failed to initialize config: {e}")
-            return False
+        self.config_dir.mkdir(parents=True, exist_ok=True)
+        # Empty toml file
+        with open(self.config_path, 'w', encoding='utf-8') as f:
+            f.write('')
     
     def save_config(self, config: Dict[str, Any]) -> bool:
         """Save config to file"""
@@ -104,14 +79,3 @@ class ConfigManager:
                 return default
         
         return value
-    
-    def get_cache_dir(self) -> Path:
-        """Get repository cache directory"""
-        cache_dir = self.get('repo.cache_dir', str(LEANUP_CACHE_DIR / 'repos'))
-        cache_path = Path(cache_dir)
-        cache_path.mkdir(parents=True, exist_ok=True)
-        return cache_path
-    
-    def get_default_source(self) -> str:
-        """Get default repository source"""
-        return self.get('repo.default_source', 'https://github.com')
