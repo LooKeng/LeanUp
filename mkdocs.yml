@@ -89,7 +89,7 @@ extra:
       link: /
       lang: en
     - name: 中文
-      link: /Lean-zh/LeanUp/zh/
+      link: /LeanUp/zh/
       lang: zh
   social:
     - icon: fontawesome/brands/github
