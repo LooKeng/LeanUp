@@ -38,6 +38,8 @@ jobs:
         leanup init
         leanup status
         leanup repo --help
+        leanup repo install lean-zh/leanup
+        leanup repo install lean-zh/repl
         leanup repo list
     
     - name: Test with pytest

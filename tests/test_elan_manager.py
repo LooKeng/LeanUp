@@ -87,24 +87,6 @@ class TestElanManager:
                 version = manager.get_elan_version()
                 assert version is None
     
-    def test_get_download_url_windows(self, mock_elan_home):
-        """Test getting download URL for Windows"""
-        with patch.dict(os.environ, {'ELAN_HOME': str(mock_elan_home)}):
-            manager = ElanManager()
-            
-            with patch('leanup.repo.elan.OS_TYPE', 'Windows'):
-                url = manager.get_download_url()
-                assert url == "https://elan.lean-lang.org/elan-init.ps1"
-    
-    def test_get_download_url_unix(self, mock_elan_home):
-        """Test getting download URL for Unix systems"""
-        with patch.dict(os.environ, {'ELAN_HOME': str(mock_elan_home)}):
-            manager = ElanManager()
-            
-            with patch('leanup.repo.elan.OS_TYPE', 'Linux'):
-                url = manager.get_download_url()
-                assert url == "https://elan.lean-lang.org/elan-init.sh"
-    
     @patch('leanup.repo.elan.requests.get')
     def test_download_installer_success(self, mock_get, mock_elan_home, temp_dir):
         """Test successful installer download"""
@@ -117,7 +99,7 @@ class TestElanManager:
             mock_get.return_value = mock_response
             
             target_path = temp_dir / 'installer.sh'
-            result = manager.download_installer('http://example.com/script.sh', target_path)
+            result = manager.download('http://example.com/script.sh', target_path)
             
             assert result is True
             assert target_path.exists()

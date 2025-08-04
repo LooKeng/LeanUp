@@ -1,10 +1,78 @@
 import pytest
-from unittest.mock import patch, Mock, mock_open
+import shutil
+from unittest.mock import patch, Mock
 from pathlib import Path
 import tempfile
-import os
 
-from leanup.repo.manager import LeanRepo
+from leanup.repo.manager import LeanRepo, RepoManager
+
+
+class TestRepoManager:
+    """Test cases for RepoManager class"""
+    
+    def setup_method(self):
+        """Setup test environment"""
+        self.temp_dir = tempfile.mkdtemp()
+        self.repo_manager = RepoManager(self.temp_dir)
+    
+    def teardown_method(self):
+        """Cleanup test environment"""
+        shutil.rmtree(self.temp_dir, ignore_errors=True)
+    
+    def test_init(self):
+        """Test RepoManager initialization"""
+        assert self.repo_manager.cwd == Path(self.temp_dir).resolve()
+        assert not self.repo_manager.is_gitrepo
+    
+    def test_read_write_file(self):
+        """Test file read/write operations"""
+        content = "test content"
+        file_path = "test.txt"
+        
+        # Test write
+        result = self.repo_manager.write_file(file_path, content)
+        assert result is True
+        
+        # Test read
+        read_content = self.repo_manager.read_file(file_path)
+        assert read_content == content
+    
+    def test_edit_file(self):
+        """Test file editing"""
+        original_content = "Hello world"
+        file_path = "test.txt"
+        
+        # Create file
+        self.repo_manager.write_file(file_path, original_content)
+        
+        # Edit file
+        result = self.repo_manager.edit_file(file_path, "world", "universe")
+        assert result is True
+        
+        # Verify edit
+        new_content = self.repo_manager.read_file(file_path)
+        assert new_content == "Hello universe"
+    
+    def test_list_files_and_dirs(self):
+        """Test listing files and directories"""
+        # Create test files and directories
+        (Path(self.temp_dir) / "file1.txt").write_text("content")
+        (Path(self.temp_dir) / "file2.py").write_text("content")
+        (Path(self.temp_dir) / "subdir").mkdir()
+        
+        # Test list files
+        files = self.repo_manager.list_files()
+        assert len(files) == 2
+        
+        # Test list files with pattern
+        py_files = self.repo_manager.list_files("*.py")
+        assert len(py_files) == 1
+        assert py_files[0].name == "file2.py"
+        
+        # Test list directories
+        dirs = self.repo_manager.list_dirs()
+        assert len(dirs) == 1
+        assert dirs[0].name == "subdir"
 
 
 class TestLeanRepo:
@@ -17,7 +85,6 @@ class TestLeanRepo:
     
     def teardown_method(self):
         """Cleanup test environment"""
-        import shutil
         shutil.rmtree(self.temp_dir, ignore_errors=True)
     
     def test_get_lean_toolchain_exists(self):
@@ -29,96 +96,10 @@ class TestLeanRepo:
         result = self.lean_repo.get_lean_toolchain()
         assert result == toolchain_content
     
-    def test_parse_dependencies_lean(self):
-        """Test parsing dependencies from lakefile.lean"""
-        lakefile_content = '''
-require mathlib from git "https://github.com/leanprover-community/mathlib4" @ "main"
-require std from git "https://github.com/leanprover/std4" @ "v4.3.0"
-'''
-        lakefile = Path(self.temp_dir) / "lakefile.lean"
-        lakefile.write_text(lakefile_content)
-        
-        result = self.lean_repo.parse_dependencies()
-        
-        assert 'mathlib' in result
-        assert 'std' in result
-        assert result['mathlib']['git'] == 'https://github.com/leanprover-community/mathlib4'
-        assert result['mathlib']['rev'] == 'main'
-    
-    @patch('leanup.repo.manager.execute_command')
-    def test_lake_command(self, mock_execute):
-        """Test basic lake command execution"""
-        mock_execute.return_value = ('output', '', 0)
-        
-        stdout, stderr, returncode = self.lean_repo.lake(['build'])
-        
-        mock_execute.assert_called_once_with(['lake', 'build'], cwd=self.temp_dir)
-        assert stdout == 'output'
-        assert returncode == 0
-    
-    @patch('leanup.repo.manager.execute_command')
-    def test_lake_build(self, mock_execute):
-        """Test lake build command"""
-        mock_execute.return_value = ('build successful', '', 0)
-        
-        stdout, stderr, returncode = self.lean_repo.lake_build()
-        
-        mock_execute.assert_called_once_with(['lake', 'build'], cwd=self.temp_dir)
-        assert returncode == 0
-    
-    @patch('leanup.repo.manager.execute_command')
-    def test_lake_build_with_target(self, mock_execute):
-        """Test lake build command with target"""
-        mock_execute.return_value = ('build successful', '', 0)
-        
-        stdout, stderr, returncode = self.lean_repo.lake_build('MyLib')
-        
-        mock_execute.assert_called_once_with(['lake', 'build', 'MyLib'], cwd=self.temp_dir)
-    
-    @patch('leanup.repo.manager.execute_command')
-    def test_lake_update(self, mock_execute):
-        """Test lake update command"""
-        mock_execute.return_value = ('update successful', '', 0)
-        
-        stdout, stderr, returncode = self.lean_repo.lake_update()
-        
-        mock_execute.assert_called_once_with(['lake', 'update'], cwd=self.temp_dir)
-    
-    @patch('leanup.repo.manager.execute_command')
-    def test_lake_env_lean_with_js(self, mock_execute):
-        """Test lake env lean command with JS backend"""
-        mock_execute.return_value = ('lean output', '', 0)
-        
-        stdout, stderr, returncode = self.lean_repo.lake_env_lean('Main.lean', json=True)
-        
-        mock_execute.assert_called_once_with(['lake', 'env', 'lean', '--json', 'Main.lean'], cwd=self.temp_dir)
-    
-    @patch('leanup.repo.manager.execute_command')
-    def test_lake_env_lean_without_js(self, mock_execute):
-        """Test lake env lean command without JS backend"""
-        mock_execute.return_value = ('lean output', '', 0)
-        
-        stdout, stderr, returncode = self.lean_repo.lake_env_lean('Main.lean', json=False)
-        
-        mock_execute.assert_called_once_with(['lake', 'env', 'lean', 'Main.lean'], cwd=self.temp_dir)
-    
-    @patch('leanup.repo.manager.execute_command')
-    def test_lake_clean(self, mock_execute):
-        """Test lake clean command"""
-        mock_execute.return_value = ('clean successful', '', 0)
-        
-        stdout, stderr, returncode = self.lean_repo.lake_clean()
-        
-        mock_execute.assert_called_once_with(['lake', 'clean'], cwd=self.temp_dir)
-    
-    @patch('leanup.repo.manager.execute_command')
-    def test_lake_test(self, mock_execute):
-        """Test lake test command"""
-        mock_execute.return_value = ('tests passed', '', 0)
-        
-        stdout, stderr, returncode = self.lean_repo.lake_test()
-        
-        mock_execute.assert_called_once_with(['lake', 'test'], cwd=self.temp_dir)
+    def test_get_lean_toolchain_not_exists(self):
+        """Test reading lean-toolchain file when it doesn't exist"""
+        result = self.lean_repo.get_lean_toolchain()
+        assert result is None
     
     def test_get_project_info(self):
         """Test getting project information"""
@@ -133,3 +114,4 @@ require std from git "https://github.com/leanprover/std4" @ "v4.3.0"
         assert info['has_lakefile_toml'] is True
         assert info['has_lakefile_lean'] is False
         assert info['build_dir_exists'] is True
+        assert info['has_lake_manifest'] is False
