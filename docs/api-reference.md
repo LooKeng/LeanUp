@@ -134,12 +134,12 @@ Build the Lean project using lake.
 ##### `lake_update() -> Tuple[str, str, int]`
 Update dependencies using lake.
 
-##### `lake_env_lean(filepath: Union[str, Path], js: bool = True) -> Tuple[str, str, int]`
+##### `lake_env_lean(filepath: Union[str, Path], json: bool = True) -> Tuple[str, str, int]`
 Run lean file with lake environment.
 
 **Parameters:**
 - `filepath`: Path to the Lean file
-- `js`: Whether to use JavaScript backend (default: True)
+- `json`: Whether to return JSON output (default: True)
 
 ##### `lake_clean() -> Tuple[str, str, int]`
 Clean build artifacts using lake.

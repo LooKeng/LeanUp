@@ -1,4 +1,4 @@
-
+import re
 import os
 import shutil
 import subprocess
@@ -7,7 +7,7 @@ from typing import Optional, List, Dict
 import requests
 
 from leanup.const import OS_TYPE, LEANUP_CACHE_DIR
-from leanup.utils.basic import execute_command
+from leanup.utils.basic import execute_command, working_directory
 from leanup.utils.custom_logger import setup_logger
 
 logger = setup_logger("elan_manager")
@@ -48,14 +48,13 @@ class ElanManager:
         try:
             output, error, code = execute_command([str(elan_path), '--version'])
             if code == 0:
-                # Extract version number from output
-                for line in output.strip().split('\n'):
-                    if 'elan' in line.lower():
-                        parts = line.split()
-                        for i, part in enumerate(parts):
-                            if 'elan' in part.lower() and i + 1 < len(parts):
-                                return parts[i + 1]
-                return output.strip().split('\n')[0]
+                # elan 4.0.0 (bb75b50d2 2025-01-30)
+                elan_regex = re.compile(r'elan\s+(\d+\.\d+\.\d+)')
+                match = elan_regex.search(output)
+                if match:
+                    return match.group(1)
+                else:
+                    logger.warning(f"Failed to parse elan version from output: {output}")
             return None
         except Exception as e:
             logger.error(f"Failed to get elan version: {e}")
@@ -96,8 +95,15 @@ class ElanManager:
             return False
     
     def install_elan(self, version: Optional[str] = None, force: bool = False) -> bool:
-        """Install elan"""
+        """Install elan with optional version specification.
         
+        Args:
+            version: Specific version to install (default: latest)
+            force: Force reinstall even if already installed
+            
+        Returns:
+            bool: True if installation successful, False otherwise
+        """
         # Check if already installed
         if self.is_elan_installed() and not force:
             current_version = self.get_elan_version()
@@ -105,82 +111,62 @@ class ElanManager:
             if version is None or current_version == version:
                 return True
             logger.info(f"Installing specified version: {version}")
-        
-        # Create temporary directory
-        temp_dir = LEANUP_CACHE_DIR / 'temp'
-        temp_dir.mkdir(parents=True, exist_ok=True)
-        
         try:
             download_url = self.get_download_url(version)
-            
-            if OS_TYPE == 'Windows':
-                # Windows uses PowerShell to run script directly from network (official recommended way)
-                logger.info("Installing elan via PowerShell...")
-                # Set environment variables for non-interactive installation
-                env = os.environ.copy()
-                env['ELAN_HOME'] = str(self.elan_home)
-                
-                # Use PowerShell to download and execute as recommended by official docs
-                script_content = f"""
-                $env:ELAN_HOME = "{self.elan_home}"
-                Invoke-WebRequest -Uri "https://elan.lean-lang.org/elan-init.ps1" -OutFile "elan-init.ps1"
-                & .\\elan-init.ps1 -y
-                Remove-Item "elan-init.ps1" -ErrorAction SilentlyContinue
-                """
-                
-                cmd = ['powershell', '-ExecutionPolicy', 'Bypass', '-Command', script_content]
+            # Use working_directory context manager for temporary directory
+            with working_directory() as temp_dir:
+                if OS_TYPE == 'Windows':
+                    # Windows uses PowerShell to run script directly from network (official recommended way)
+                    logger.info("Installing elan via PowerShell...")
+                    # Set environment variables for non-interactive installation
+                    env = os.environ.copy()
+                    env['ELAN_HOME'] = str(self.elan_home)
+                    
+                    # Use PowerShell to download and execute as recommended by official docs
+                    script_content = f"""
+                    $env:ELAN_HOME = "{self.elan_home}"
+                    Invoke-WebRequest -Uri "https://elan.lean-lang.org/elan-init.ps1" -OutFile "elan-init.ps1"
+                    & .\\elan-init.ps1 -y
+                    Remove-Item "elan-init.ps1" -ErrorAction SilentlyContinue
+                    """
+                    
+                    cmd = ['powershell', '-ExecutionPolicy', 'Bypass', '-Command', script_content]
+                else:
+                    # Linux/macOS use shell script installation
+                    installer_path = temp_dir / 'elan-init.sh'
+                    if not self.download_installer(download_url, installer_path):
+                        return False
+                    
+                    logger.info("Running elan installation script...")
+                    # Set environment variables for non-interactive installation
+                    env = os.environ.copy()
+                    env['ELAN_HOME'] = str(self.elan_home)
+                    
+                    cmd = ['sh', str(installer_path), '-y']
                 output, error, code = execute_command(cmd, cwd=str(temp_dir))
-                
                 if code != 0:
                     logger.error(f"Installation failed: {error}")
+                    return False
+                
+                # Verify installation
+                if self.is_elan_installed():
+                    installed_version = self.get_elan_version()
+                    logger.info(f"elan installed successfully! Version: {installed_version}")
+                    return True
+                else:
+                    logger.error("Installation completed, but elan executable not found")
                     return False
                     
-            else:
-                # Linux/macOS use shell script installation
-                installer_path = temp_dir / 'elan-init.sh'
-                if not self.download_installer(download_url, installer_path):
-                    return False
-                
-                logger.info("Running elan installation script...")
-                # Set environment variables for non-interactive installation
-                env = os.environ.copy()
-                env['ELAN_HOME'] = str(self.elan_home)
-                
-                cmd = ['sh', str(installer_path), '-y']
-                output, error, code = execute_command(cmd)
-                
-                if code != 0:
-                    logger.error(f"Installation failed: {error}")
-                    return False
-            
-            # Verify installation
-            if self.is_elan_installed():
-                installed_version = self.get_elan_version()
-                logger.info(f"elan installed successfully! Version: {installed_version}")
-                return True
-            else:
-                logger.error("Installation completed, but elan executable not found")
-                return False
-                
         except Exception as e:
             logger.error(f"Error occurred during elan installation: {e}")
             return False
-        finally:
-            # Clean up temporary files
-            try:
-                if OS_TYPE != 'Windows' and 'installer_path' in locals() and installer_path.exists():
-                    installer_path.unlink()
-            except OSError:
-                # Ignore file deletion errors
-                pass
     
     def proxy_elan_command(self, args: List[str]) -> int:
         """Proxy execute elan command with streaming output"""
         elan_path = self.get_elan_executable()
         
         if not elan_path:
-            logger.error("elan is not installed. Please run 'leanup install' to install elan first.")
-            return 1
+            self.install_elan()
         
         # Build complete command
         cmd = [str(elan_path)] + args

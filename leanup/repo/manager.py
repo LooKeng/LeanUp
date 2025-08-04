@@ -1,9 +1,9 @@
 import subprocess
+import re
 from pathlib import Path
 from typing import Optional, Union, List, Dict, Any, Tuple
 import git
 import toml
-import platform
 
 from leanup.utils.basic import execute_command
 from leanup.utils.custom_logger import setup_logger
@@ -85,25 +85,6 @@ class RepoManager:
         Returns:
             Tuple containing stdout, stderr, and return code
         """
-        if isinstance(command, str):
-            # Split the command string into a list
-            if platform.system() == 'Windows':
-                # For Windows, use shell=True for string commands
-                process = subprocess.Popen(
-                    command,
-                    cwd=str(self.cwd),
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    shell=True,
-                    text=True
-                )
-                stdout, stderr = process.communicate()
-                return stdout, stderr, process.returncode
-            else:
-                # For Unix-like systems, split the command
-                import shlex
-                command = shlex.split(command)
-        
         return execute_command(command, cwd=str(self.cwd))
     
     def read_file(self, file_path: Union[str, Path]) -> str:
@@ -136,7 +117,6 @@ class RepoManager:
             path = self.cwd / file_path
             # Create parent directories if they don't exist
             path.parent.mkdir(parents=True, exist_ok=True)
-            
             mode = 'a' if append else 'w'
             with open(path, mode, encoding='utf-8') as f:
                 f.write(content)
@@ -239,7 +219,6 @@ class RepoManager:
         if not self.is_gitrepo:
             logger.error("Not a git repository")
             return False
-        
         try:
             if paths is None:
                 # Add all files
@@ -381,10 +360,8 @@ class LeanRepo(RepoManager):
             try:
                 content = self.read_file("lakefile.lean")
                 # Simple parsing for require statements
-                import re
                 require_pattern = r'require\s+([\w\-]+)\s+from\s+git\s+"([^"]+)"(?:\s+@\s+"([^"]+)")?'
                 matches = re.findall(require_pattern, content)
-                
                 for match in matches:
                     name, url, version = match
                     dependencies[name] = {
@@ -437,20 +414,20 @@ class LeanRepo(RepoManager):
     def lake_env_lean(
         self, 
         filepath: Union[str, Path], 
-        js: bool = True, 
+        json: bool = True, 
         options: Optional[Dict[str, Any]] = None,
-        nproc:int =None) -> Tuple[str, str, int]:
+        nproc: Optional[int] = None) -> Tuple[str, str, int]:
         """Run lean file with lake environment.
         
         Args:
             filepath: Path to the Lean file
-            js: Whether to return JSON output, default is True
+            json: Whether to return JSON output, default is True
             
         Returns:
             Tuple containing stdout, stderr, and return code
         """
         args = ["env", "lean"]
-        if js:
+        if json:
             args.append("--json")
         if options is not None:
             opts = ["-D {}={}".format(k,v) for k,v in options.items()]

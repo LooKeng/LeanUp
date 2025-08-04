@@ -105,12 +105,12 @@ def execute_command(
 ##### `lake_update() -> Tuple[str, str, int]`
 使用 lake 更新依赖。
 
-##### `lake_env_lean(filepath: Union[str, Path], js: bool = True) -> Tuple[str, str, int]`
+##### `lake_env_lean(filepath: Union[str, Path], json: bool = True) -> Tuple[str, str, int]`
 在 lake 环境中运行 lean 文件。
 
 **参数：**
 - `filepath`: Lean 文件路径
-- `js`: 是否使用 JavaScript 后端（默认：True）
+- `json`: 是否返回 JSON 格式输出（默认：True）
 
 ##### `lake_clean() -> Tuple[str, str, int]`
 使用 lake 清理构建产物。

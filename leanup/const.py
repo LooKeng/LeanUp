@@ -16,3 +16,7 @@ LEANUP_CACHE_DIR = Path(
 
 # Ensure cache directory exists
 LEANUP_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+
+TMP_DIR = os.getenv("TMP_DIR")
+if isinstance(TMP_DIR, str):
+    TMP_DIR = Path(TMP_DIR)

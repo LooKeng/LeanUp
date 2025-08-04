@@ -2,7 +2,6 @@ import os
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 from pathlib import Path
-import platform
 from leanup.repo.elan import ElanManager
 from leanup.const import OS_TYPE
 
@@ -124,7 +123,7 @@ class TestElanManager:
             assert target_path.exists()
     
     @patch('subprocess.run')
-    @pytest.mark.skipif(platform.system() == 'Windows', reason="Windows path separator issue")
+    @pytest.mark.skipif(OS_TYPE == 'Windows', reason="Windows path separator issue")
     def test_proxy_elan_command_success(self, mock_run, mock_elan_home):
         """Test successful elan command proxy"""
         with patch.dict(os.environ, {'ELAN_HOME': str(mock_elan_home)}):
@@ -137,7 +136,7 @@ class TestElanManager:
                 assert result == 0
                 mock_run.assert_called_once_with(['/usr/bin/elan', '--version'], check=False)
     
-    @pytest.mark.skipif(platform.system() == 'Windows', reason="Windows path separator issue")
+    @pytest.mark.skipif(OS_TYPE == 'Windows', reason="Windows path separator issue")
     def test_get_status_info_installed(self, mock_elan_home):
         """Test getting status info when elan is installed"""
         with patch.dict(os.environ, {'ELAN_HOME': str(mock_elan_home)}):

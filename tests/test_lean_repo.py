@@ -89,7 +89,7 @@ require std from git "https://github.com/leanprover/std4" @ "v4.3.0"
         """Test lake env lean command with JS backend"""
         mock_execute.return_value = ('lean output', '', 0)
         
-        stdout, stderr, returncode = self.lean_repo.lake_env_lean('Main.lean', js=True)
+        stdout, stderr, returncode = self.lean_repo.lake_env_lean('Main.lean', json=True)
         
         mock_execute.assert_called_once_with(['lake', 'env', 'lean', '--json', 'Main.lean'], cwd=self.temp_dir)
     
@@ -98,7 +98,7 @@ require std from git "https://github.com/leanprover/std4" @ "v4.3.0"
         """Test lake env lean command without JS backend"""
         mock_execute.return_value = ('lean output', '', 0)
         
-        stdout, stderr, returncode = self.lean_repo.lake_env_lean('Main.lean', js=False)
+        stdout, stderr, returncode = self.lean_repo.lake_env_lean('Main.lean', json=False)
         
         mock_execute.assert_called_once_with(['lake', 'env', 'lean', 'Main.lean'], cwd=self.temp_dir)
     

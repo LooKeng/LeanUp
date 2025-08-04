@@ -54,38 +54,32 @@ def install(version: Optional[str], force: bool):
     elan_manager = ElanManager()
     
     if not elan_manager.is_elan_installed():
-        click.echo("elan is not installed. Run 'leanup init' first.", err=True)
-        sys.exit(1)
+        click.echo("✗ elan is not installed, trying to install...")
+        if not elan_manager.install_elan():
+            click.echo("✗ Failed to install elan", err=True)
+            sys.exit(1)
+        click.echo("✓ elan installed successfully")
     
     if not version:
         # Install latest stable version
         click.echo("Installing latest Lean toolchain...")
-        try:
-            result = elan_manager.proxy_elan_command(['toolchain', 'install', 'stable'])
-            if result == 0:
-                click.echo("✓ Latest Lean toolchain installed")
-            else:
-                click.echo("✗ Failed to install Lean toolchain", err=True)
-                sys.exit(1)
-        except Exception as e:
-            click.echo(f"✗ Failed to install Lean toolchain: {e}", err=True)
-            sys.exit(1)
+        cmd = ['toolchain', 'install', 'stable']
     else:
         # Install specific version
         click.echo(f"Installing Lean toolchain {version}...")
-        try:
-            cmd = ['toolchain', 'install', version]
-            if force:
-                cmd.append('--force')
-            result = elan_manager.proxy_elan_command(cmd)
-            if result == 0:
-                click.echo(f"✓ Lean toolchain {version} installed")
-            else:
-                click.echo(f"✗ Failed to install Lean toolchain {version}", err=True)
-                sys.exit(1)
-        except Exception as e:
-            click.echo(f"✗ Failed to install Lean toolchain {version}: {e}", err=True)
+        cmd = ['toolchain', 'install', version]
+    if force:
+        cmd.append('--force')
+    try:
+        result = elan_manager.proxy_elan_command(cmd)
+        if result == 0:
+            click.echo(f"✓ Lean toolchain {version} installed")
+        else:
+            click.echo(f"✗ Failed to install Lean toolchain {version}", err=True)
             sys.exit(1)
+    except Exception as e:
+        click.echo(f"✗ Failed to install Lean toolchain {version}: {e}", err=True)
+        sys.exit(1)
 
 
 @cli.command()
