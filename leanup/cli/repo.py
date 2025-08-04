@@ -1,4 +1,5 @@
 import click
+import shutil
 import sys
 from pathlib import Path
 from typing import Optional
@@ -25,11 +26,12 @@ def repo():
 @click.option('--force', '-f', is_flag=True, help='Replace existing directory')
 @click.option('--dest-dir', '-d', help='Destination directory (default: cache dir)')
 @click.option('--interactive', '-i', is_flag=True, help='Interactive configuration')
-def install(repository: str, source: Optional[str], url: Optional[str], 
+@click.pass_context
+def install(ctx, repository: str, source: Optional[str], url: Optional[str], 
            branch: Optional[str], force: bool, dest_dir: Optional[str], interactive: bool):
     """Install a repository (format: owner/repo)"""
     
-    config_manager = ConfigManager()
+    config_manager = ctx.parent.obj['config']
     
     if interactive:
         # Interactive configuration
@@ -128,12 +130,11 @@ def install(repository: str, source: Optional[str], url: Optional[str],
             click.echo(f"Directory {dest_path} already exists. Use --force to replace.", err=True)
             sys.exit(1)
         else:
-            import shutil
             shutil.rmtree(dest_path)
             click.echo(f"Removed existing directory: {dest_path}")
     
     # Create parent directories
-    dest_path.parent.mkdir(parents=True, exist_ok=True)
+    dest_path.mkdir(exist_ok=True)
     
     # Clone repository
     click.echo(f"Cloning {repo_url} to {dest_path}...")
@@ -166,11 +167,11 @@ def install(repository: str, source: Optional[str], url: Optional[str],
             if config.get('repo', {}).get('lake_update', True):
                 click.echo("Executing lake update...")
                 try:
-                    result = lean_repo.lake_update()
-                    if result.returncode == 0:
+                    stdout, stderr, returncode = lean_repo.lake_update()
+                    if returncode == 0:
                         click.echo("✓ lake update completed")
                     else:
-                        click.echo(f"⚠ lake update failed: {result.stderr}", err=True)
+                        click.echo(f"⚠ lake update failed: {stderr}", err=True)
                 except Exception as e:
                     click.echo(f"⚠ lake update error: {e}", err=True)
             
@@ -181,21 +182,21 @@ def install(repository: str, source: Optional[str], url: Optional[str],
                     click.echo(f"Building packages: {', '.join(build_packages)}...")
                     for package in build_packages:
                         try:
-                            result = lean_repo.lake(["build", package])
-                            if result.returncode == 0:
+                            stdout, stderr, returncode = lean_repo.lake(["build", package])
+                            if returncode == 0:
                                 click.echo(f"✓ Built package: {package}")
                             else:
-                                click.echo(f"⚠ Failed to build package {package}: {result.stderr}", err=True)
+                                click.echo(f"⚠ Failed to build package {package}: {stderr}", err=True)
                         except Exception as e:
                             click.echo(f"⚠ Build error for {package}: {e}", err=True)
                 else:
                     click.echo("Building project...")
                     try:
-                        result = lean_repo.lake_build()
-                        if result.returncode == 0:
+                        stdout, stderr, returncode = lean_repo.lake_build()
+                        if returncode == 0:
                             click.echo("✓ Build completed")
                         else:
-                            click.echo(f"⚠ Build failed: {result.stderr}", err=True)
+                            click.echo(f"⚠ Build failed: {stderr}", err=True)
                     except Exception as e:
                         click.echo(f"⚠ Build error: {e}", err=True)
     else:
@@ -205,9 +206,10 @@ def install(repository: str, source: Optional[str], url: Optional[str],
 
 @repo.command()
 @click.option('--name', '-n', help='Filter by repository name (owner/repo)')
-def list(name: Optional[str]):
+@click.pass_context
+def list(ctx, name: Optional[str]):
     """List installed repositories"""
-    config_manager = ConfigManager()
+    config_manager = ctx.parent.obj['config']
     cache_dir = config_manager.get_cache_dir()
     
     if not cache_dir.exists():

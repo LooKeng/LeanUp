@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Optional, List, Dict
 import requests
 
-from leanup.const import OS_TYPE, LEANUP_CACHE_DIR
+from leanup.const import OS_TYPE
 from leanup.utils.basic import execute_command, working_directory
 from leanup.utils.custom_logger import setup_logger
 

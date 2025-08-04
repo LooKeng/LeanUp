@@ -1,13 +1,18 @@
 import tempfile
 import pytest
 from pathlib import Path
-from leanup.const import LEANUP_CACHE_DIR
+from leanup.const import LEANUP_CACHE_DIR, LEANUP_CONFIG_DIR
 from leanup.cli.config import ConfigManager
 
 @pytest.fixture
 def cache_dir():
     """Fixture to provide the LeanUp cache directory."""
     return LEANUP_CACHE_DIR
+
+@pytest.fixture
+def config_dir():
+    """Fixture to provide the LeanUp config directory."""
+    return LEANUP_CONFIG_DIR
 
 @pytest.fixture
 def temp_dir():

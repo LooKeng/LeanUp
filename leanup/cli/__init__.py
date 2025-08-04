@@ -13,11 +13,13 @@ logger = setup_logger("leanup_cli")
 
 @click.group()
 @click.version_option()
+@click.option('--config-dir', '-c', type=click.Path(exists=False, file_okay=False, dir_okay=True, path_type=Path), 
+              help='Custom configuration directory')
 @click.pass_context
-def cli(ctx):
+def cli(ctx, config_dir):
     """LeanUp - Lean project management tool"""
     ctx.ensure_object(dict)
-    ctx.obj['config'] = ConfigManager()
+    ctx.obj['config'] = ConfigManager(config_dir=config_dir)
 
 
 @cli.command()

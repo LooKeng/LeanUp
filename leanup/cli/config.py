@@ -2,7 +2,7 @@ import yaml
 from pathlib import Path
 from typing import Dict, Any, Optional
 from leanup.utils.custom_logger import setup_logger
-from leanup.const import LEANUP_CACHE_DIR
+from leanup.const import LEANUP_CACHE_DIR, LEANUP_CONFIG_DIR
 
 logger = setup_logger("config_manager")
 
@@ -14,12 +14,12 @@ class ConfigManager:
         """Initialize config manager
         
         Args:
-            config_dir: Custom config directory (default: LEANUP_CACHE_DIR)
+            config_dir: Custom config directory (default: LEANUP_CONFIG_DIR)
         """
         if config_dir:
             self.config_dir = Path(config_dir)
         else:
-            self.config_dir = LEANUP_CACHE_DIR
+            self.config_dir = LEANUP_CONFIG_DIR
         
         # Ensure config directory exists
         self.config_dir.mkdir(parents=True, exist_ok=True)

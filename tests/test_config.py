@@ -5,7 +5,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from leanup.cli.config import ConfigManager
-from leanup.const import LEANUP_CACHE_DIR
+from leanup.const import LEANUP_CACHE_DIR, LEANUP_CONFIG_DIR
 
 
 class TestConfigManager:
@@ -14,7 +14,7 @@ class TestConfigManager:
     def test_init_default_config_dir(self):
         """Test ConfigManager initialization with default config directory"""
         config_manager = ConfigManager()
-        assert config_manager.config_dir == LEANUP_CACHE_DIR
+        assert config_manager.config_dir == LEANUP_CONFIG_DIR
         assert config_manager.config_path == config_manager.config_dir / 'config.yaml'
     
     def test_init_custom_config_dir(self):
