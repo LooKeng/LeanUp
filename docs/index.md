@@ -23,7 +23,7 @@ LeanUp provides a comprehensive CLI with the following commands:
 ### Main Commands
 
 - `leanup init` - Initialize LeanUp configuration
-- `leanup install [version]` - Install elan toolchain manager
+- `leanup install [version]` - Install Lean toolchain version via elan
 - `leanup status` - Show current status and configuration
 - `leanup elan <args>` - Proxy elan commands
 

@@ -68,29 +68,6 @@ leanup elan default stable
 
 ## 📖 Detailed Usage Guide
 
-### Configuration Management
-
-```bash
-# Initialize LeanUp configuration
-leanup init
-
-# View current status and configuration
-leanup status
-```
-
-### Installing elan
-
-```bash
-# Install latest version of elan
-leanup install
-
-# Install specific version
-leanup install v1.4.2
-
-# Force reinstall
-leanup install --force
-```
-
 ### Managing Lean Toolchains
 
 After installing elan, you can use `leanup elan` commands to manage Lean toolchains:

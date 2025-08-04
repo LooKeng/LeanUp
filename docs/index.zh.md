@@ -23,7 +23,7 @@ LeanUp 提供了完整的 CLI，包含以下命令：
 ### 主要命令
 
 - `leanup init` - 初始化 LeanUp 配置
-- `leanup install [version]` - 安装 elan 工具链管理器
+- `leanup install [version]` - 安装 Lean 工具链版本（通过 elan）
 - `leanup status` - 显示当前状态和配置
 - `leanup elan <args>` - 代理 elan 命令
 

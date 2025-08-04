@@ -30,14 +30,14 @@ leanup install
 leanup status
 ```
 
-### Install elan
+### Install Lean Toolchain
 
 ```bash
-# Install latest version of elan
+# Install latest stable Lean toolchain
 leanup install
 
-# Install specific version
-leanup install v1.4.2
+# Install specific Lean toolchain version
+leanup install v4.14.0
 
 # Force reinstall
 leanup install --force

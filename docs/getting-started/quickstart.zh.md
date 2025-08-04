@@ -30,14 +30,14 @@ leanup install
 leanup status
 ```
 
-### 安装 elan
+### 安装 Lean 工具链
 
 ```bash
-# 安装最新版本的 elan
+# 安装最新稳定版 Lean 工具链
 leanup install
 
-# 安装特定版本
-leanup install v1.4.2
+# 安装特定版本的 Lean 工具链
+leanup install v4.14.0
 
 # 强制重新安装
 leanup install --force
